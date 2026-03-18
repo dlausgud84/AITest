@@ -1,0 +1,22 @@
+# 프론트엔드 .gitignore
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store

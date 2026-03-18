@@ -1,0 +1,20 @@
+{
+  "name": "noroo-mes-app",
+  "version": "1.0.0",
+  "description": "AiCodeTest Manufacturing Execution System Frontend",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "nuxt": "^3.8.0",
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "typescript": "^5.0.0"
+  }
+}

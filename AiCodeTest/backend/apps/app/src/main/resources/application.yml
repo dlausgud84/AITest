@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: AiCodeTest
+
+  datasource:
+    # Microsoft SQL Server 연결 설정
+    # encrypt=true: 자동 암호화 활성화
+    # trustServerCertificate=true: 자체 서명 인증서 허용 (개발 환경)
+    url: jdbc:sqlserver://localhost:1433;databaseName=NOROO_MES;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: YourPassword123!
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+mybatis:
+  # MyBatis 맵퍼 위치
+  mapper-locations: classpath:mappers/**/*.xml
+  
+  # 타입 별칭 패키지
+  type-aliases-package: com.dit.*.domain
+  
+  configuration:
+    # 스네이크케이스 컬럼명 → 카멜케이스 프로퍼티명 자동 매핑
+    map-underscore-to-camel-case: true
+    # lazy loading 활성화
+    lazy-loading-enabled: true
+    # 실행 계획 재사용
+    default-executor-type: REUSE
+    # 로깅 레벨
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    com.dit: DEBUG
+    org.springframework.web: DEBUG
+    org.mybatis: DEBUG
+
+# MES 서버 연동 정보 (참고용)
+mes:
+  server:
+    bridge-url: http://localhost:18080/
+    proxy-url: http://localhost:60100/WebProxy.asmx
+
