@@ -6,9 +6,9 @@ spring:
     # Microsoft SQL Server 연결 설정
     # encrypt=true: 자동 암호화 활성화
     # trustServerCertificate=true: 자체 서명 인증서 허용 (개발 환경)
-    url: jdbc:sqlserver://localhost:1433;databaseName=NOROO_MES;encrypt=true;trustServerCertificate=true
-    username: sa
-    password: YourPassword123!
+    url: jdbc:sqlserver://192.168.1.222:1433;databaseName=MESDB_MYLEE;encrypt=true;trustServerCertificate=true
+    username: NEOSLON
+    password: NeoSlon!@#456
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
   jpa:
