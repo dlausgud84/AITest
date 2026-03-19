@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/소스/바이브코딩/AITest//**)"
+    ],
+    "additionalDirectories": [
+      "d:\\소스\\바이브코딩\\AITest\\.claude"
+    ]
+  }
+}

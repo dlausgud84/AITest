@@ -15,17 +15,21 @@
       "Bash(unzip -q gradle-8.7-bin.zip -d gradle-8.7)",
       "Bash(unzip -q /tmp/gradle-8.7-bin.zip -d /tmp/gradle-dist)",
       "Bash(GRADLE_HOME=\"/c/gradle-install/gradle-8.7\")",
-      "Bash(BACKEND_DIR=\"c:\\\\이면형\\\\소스\\\\바이브코딩\\\\AITest\\\\AiCodeTest\\\\backend\")",
+      "Bash(BACKEND_DIR=\"d:\\\\소스\\\\바이브코딩\\\\AITest\\\\AiCodeTest\\\\backend\")",
       "Bash(\"$GRADLE_HOME/bin/gradle\" --version)",
       "Bash(curl -s http://localhost:8080/api/menus)",
       "Bash(curl -v http://localhost:8080/api/health)",
       "Bash(powershell.exe -Command \"Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object OwningProcess | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force; Write-Host ''Killed PID'' $_.OwningProcess }\")",
-      "Read(//c/Users/dlaus/.claude/projects/c---------------AITest/memory/**)",
+      "Read(//c/Users/dlaus/.claude/projects/d-----------AITest/memory/**)",
       "Bash(./gradlew --version)",
       "Bash(./gradlew :modules:auth:build --info)",
       "Bash(./gradlew :modules:auth:build)",
       "Read(//tmp/**)",
-      "Bash(start http://localhost:3000/login)"
+      "Bash(start http://localhost:3000/login)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //PID 25048 //PID 27980)",
+      "Read(//d/소스/바이브코딩/AITest/**)",
+      "Bash(xargs -r -I{} taskkill //F //PID {})"
     ]
   }
 }
