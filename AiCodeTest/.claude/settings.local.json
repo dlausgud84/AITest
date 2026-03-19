@@ -5,7 +5,8 @@
       "Bash(git config:*)",
       "Bash(cmdkey /list)",
       "Read(//d/소스/바이브코딩/AITest/**)",
-      "Bash(npx skills:*)"
+      "Bash(npx skills:*)",
+      "Bash(gh repo:*)"
     ],
     "additionalDirectories": [
       "d:\\소스\\바이브코딩\\AITest\\.claude"
