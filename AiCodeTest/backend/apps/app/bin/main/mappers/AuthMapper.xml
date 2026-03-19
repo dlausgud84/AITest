@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dit.auth.persistence.mapper.AuthMapper">
+
+    <resultMap id="siteMap" type="com.dit.auth.domain.Site">
+        <result column="SITE_ID" property="siteId" />
+        <result column="SITE_NAME" property="siteName" />
+    </resultMap>
+
+    <resultMap id="userMap" type="com.dit.auth.domain.User">
+        <result column="USER_ID" property="userId" />
+        <result column="USER_NAME" property="userName" />
+        <result column="SITE_ID" property="siteId" />
+    </resultMap>
+
+    <!-- MES 사이트 목록 조회 (SITE_TYPE = 'MES' 인 공장만) -->
+    <!-- ※ 실제 NB_SITES 테이블의 타입 컬럼명/값을 확인 후 WHERE 조건을 조정하세요 -->
+    <select id="selectMesSites" resultMap="siteMap">
+        SELECT SITE_ID, SITE_NAME
+        FROM NB_SITES
+        WHERE SITE_TYPE = 'MES Site'
+        ORDER BY SITE_NAME ASC
+    </select>
+
+    <!-- 사용자 인증 (USER_ID + PASSWORD 일치 시 반환) -->
+    <select id="selectUserByIdAndPassword" resultMap="userMap">
+        SELECT USER_ID, USER_NAME, SITE_ID
+        FROM NB_USERS
+        WHERE USER_ID = #{userId}
+          AND PASSWORD = #{password}
+    </select>
+
+</mapper>

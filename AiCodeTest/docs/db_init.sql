@@ -3,6 +3,7 @@
 -- ========================================
 
 -- 1. 데이터베이스 생성
+/*
 IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'NOROO_MES')
 BEGIN
     CREATE DATABASE [NOROO_MES];
@@ -11,6 +12,7 @@ GO
 
 USE [NOROO_MES];
 GO
+*/
 
 -- 2. 메뉴 테이블 생성 (NW_MENUS)
 -- 테이블이 존재하지 않으면 생성

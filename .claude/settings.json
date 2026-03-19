@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew :apps:app:bootRun)",
+      "Bash(./gradlew :apps:app:dependencies --configuration runtimeClasspath)",
+      "Bash(powershell.exe -Command \":*)",
+      "Bash(./gradlew :apps:app:dependencies --configuration runtimeClasspath --refresh-dependencies)",
+      "Bash(./gradlew clean:*)",
+      "Bash(./gradlew :apps:app:dependencies --configuration runtimeClasspath --no-configuration-cache)"
+    ]
+  }
+}

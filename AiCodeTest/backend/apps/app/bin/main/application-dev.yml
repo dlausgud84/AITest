@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    # Microsoft SQL Server 개발 환경 연결
+    # trustServerCertificate=true: 자체 서명 인증서 허용
+    url: jdbc:sqlserver://192.168.1.222:1433;databaseName=MESDB_MYLEE;encrypt=true;trustServerCertificate=true
+    username: mesadmin
+    password: spdh!@#$5678
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+logging:
+  level:
+    root: INFO
+    com.dit: DEBUG
+    org.springframework.web: DEBUG
+    org.mybatis: DEBUG

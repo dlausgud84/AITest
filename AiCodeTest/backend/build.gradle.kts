@@ -1,6 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "4.0.0" apply false
+    id("org.springframework.boot") version "3.3.9" apply false
     id("io.spring.dependency-management") version "1.1.4"
 }
 
@@ -20,11 +20,22 @@ subprojects {
         mavenCentral()
     }
 
+    the<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension>().apply {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:3.3.9")
+        }
+        dependencies {
+            dependency("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
+            dependency("org.mybatis.spring.boot:mybatis-spring-boot-autoconfigure:3.0.4")
+            dependency("org.mybatis:mybatis-spring:3.0.4")
+        }
+    }
+
     dependencies {
         // 공통 의존성
         compileOnly("org.projectlombok:lombok")
         annotationProcessor("org.projectlombok:lombok")
-        
+
         testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
     }
 
@@ -39,15 +50,16 @@ project(":apps:app") {
 
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter-web")
-        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+        implementation("org.springframework.boot:spring-boot-starter-jdbc")
         runtimeOnly("com.microsoft.sqlserver:mssql-jdbc:12.4.1.jre11")
-        
+
         // MyBatis
-        implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.2")
-        
+        implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
+
         // 모듈 의존성
         implementation(project(":modules:common"))
         implementation(project(":modules:menu"))
+        implementation(project(":modules:auth"))
 
         testImplementation("org.springframework.boot:spring-boot-starter-test")
     }
@@ -64,6 +76,16 @@ project(":modules:common") {
 project(":modules:menu") {
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
+        implementation(project(":modules:common"))
+    }
+}
+
+// 인증 도메인 모듈
+project(":modules:auth") {
+    dependencies {
+        implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
         implementation(project(":modules:common"))
     }
 }

@@ -13,6 +13,7 @@ dependencies {
     // 모듈 의존성
     implementation(project(":modules:common"))
     implementation(project(":modules:menu"))
+    implementation(project(":modules:auth"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

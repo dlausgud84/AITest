@@ -11,6 +11,9 @@ public enum ErrorCode {
     UNAUTHORIZED("E004", "인증되지 않은 요청입니다."),
     FORBIDDEN("E005", "접근 권한이 없습니다."),
 
+    // 인증 관련 에러
+    LOGIN_FAILED("A001", "아이디 또는 비밀번호가 일치하지 않습니다."),
+
     // 메뉴 관련 에러
     MENU_NOT_FOUND("M001", "메뉴를 찾을 수 없습니다."),
     MENU_DUPLICATE("M002", "이미 존재하는 메뉴입니다."),
