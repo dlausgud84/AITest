@@ -25,7 +25,7 @@
 * **설명**: Nuxt 3/4 환경에서 Auth0를 활용한 프로덕션 레벨의 인증 플로우(컴포저블 및 미들웨어 패턴)를 구현할 수 있도록 돕는 Auth0 공식 스킬입니다.
 * **설치 명령어**: `npx skills add auth0/agent-skills` (세부 스킬: `auth0-nuxt`)
 
-* 6. TypeScript 고급 타입 및 패턴 (wshobson/agents)
+** 6. TypeScript 고급 타입 및 패턴 (wshobson/agents)
 
 설명: 프로젝트의 가장 큰 비중을 차지하는 TypeScript(62.7%)의 복잡한 타입 정의, 안전한 코드 작성, 그리고 API 설계 원칙을 에이전트가 이해하고 보조할 수 있도록 돕는 스킬입니다.
 
