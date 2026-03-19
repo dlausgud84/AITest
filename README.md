@@ -1,7 +1,3 @@
-`skills.sh`에서 `nuxt`로 검색 시 나오는 주요 AI 에이전트 스킬(Agent Skills)들을 Git(예: README.md)에 바로 복사해서 넣으실 수 있도록 마크다운 리스트 형태로 정리해 드립니다.
-
-***
-
 ### 🟢 Nuxt AI Agent Skills List
 
 **1. Nuxt UI 공식 스킬 (`nuxt/ui`)**
