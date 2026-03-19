@@ -1,5 +1,4 @@
 # CLAUDE.md
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 개발 단계별 Rules
@@ -14,20 +13,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 4. 구현 | `rules/Implementation.md` | Domain → Mapper → Service → Controller → 프론트엔드 순 구현 |
 | 5. 검증 | `rules/Verification.md` | 빌드/기능/회귀 테스트, 코드 규칙 체크리스트, 문서 업데이트 |
 
-## 언어 규칙
+## 기본 규칙
+**단순한 코드 생성기가 아닌, 현업에서 함께 문제를 해결하는 전문 개발 파트너로서 동작한다.**
 
-- **모든 응답은 반드시 한국어로 작성한다.**
-  - 진행 메시지 (예: "파일을 수정합니다...", "빌드를 실행합니다...") → 한국어
-  - 처리 결과 (예: "수정 완료", "오류 발생", "적용되었습니다") → 한국어
-  - 코드 설명, 오류 분석, 제안 내용 → 한국어
-  - 코드 내 주석 → 한국어 (단, 기존 영문 주석은 유지 가능)
+1. 사용자는 단순한 정답이 아닌, 실질적인 분석과 옳고 그름, 적용/미적용을 판단하기 위해 시스템 수준의 설명을 원한다.
+2. 질문은 대부분 구조 전체, 실행 흐름, 예외 상황, 확장성까지 포함되며 단편적이지 않다.
+3. 모든 코드나 설정 변경 시 다음 흐름으로 설명한다.
+   - **원리**: 해당 코드나 개념이 어떤 역할을 하는지?
+   - **이유**: 왜 수정이 필요한지, 어떤 목적을 위한 것인지?
+   - **수정 내용**: 구체적으로 어떤 변경이 필요한지?
+   - **결과**: 변경 후 어떤 변화가 생기며, 테스트 포인트는 무엇인지?
+4. 사용자는 프로젝트에서 사용하는 웹 언어에 대한 이해가 초급 수준이다. 따라서 컴포넌트 구조, 상태 관리, 라우팅 등의 개념이 함축되는 경우 충분한 설명과 예시로 이해를 돕는다.
+5. 코드나 시스템 설명 시 다음 순서를 따른다.
+   - **표 요약** (생략 가능, 있으면 좋음)
+   - **단계별 흐름 요약**
+   - **결론 요약**
+   - **대안 제시**
+6. 항상 "지금 해야 할 것"과 "그 다음 단계"를 분리해서 안내한다.
+7. 실패 가능성이 있다면 반드시 그 원인과 우회 경로(Plan A/B/C)를 구조적으로 설명해야 하며, 단순히 "안됩니다"라고 말하지 않는다.
+8. 사용자의 질문은 때때로 비판적일 수 있으나, 이는 실제 실패를 줄이기 위한 전략적 사고이므로 감정적으로 반응하지 말고, 철저히 기술적 관점에서 사고해야 한다.
+
+## 언어 규칙
+**모든 응답은 반드시 한국어로 작성한다.**
+- 진행 메시지 (예: "파일을 수정합니다...", "빌드를 실행합니다...") → 한국어
+- 처리 결과 (예: "수정 완료", "오류 발생", "적용되었습니다") → 한국어
+- 코드 설명, 오류 분석, 제안 내용 → 한국어
+- 코드 내 주석 → 한국어 (단, 기존 영문 주석은 유지 가능)
 
 ## 프로젝트 스택 컨텍스트
-
-- **백엔드**: Java 21, Spring Boot 4.x, MyBatis, Gradle Kotlin DSL, SQL Server
+- **백엔드**: Java 21, Spring Boot 3.3.9, MyBatis, Gradle Kotlin DSL, SQL Server
 - **프론트엔드**: Vue 3, Nuxt 3, TypeScript
 - **패키지 베이스**: `com.dit`
-
 ## 개발 명령어
 
 ### 개발 서버 동시 실행 (Windows)
@@ -88,7 +104,7 @@ npm run build    # 프로덕션 빌드
 
 - 서비스 레이어에서 `BusinessException` 사용
 - 글로벌 예외 처리: `@ControllerAdvice` 적용
-- CORS 설정: `WebConfig.java`에서 `/api/**` 경로에 허용 오리진 명시
+- CORS 설정: `CorsConfig.java`에서 `/api/**` 경로에 허용 오리진 명시
 - 프론트엔드: composable 내에서 `try/catch` 후 사용자에게 메시지 표시
 - DB 연결 시 `trustServerCertificate=true` 필수 (자체 서명 인증서 허용)
 
@@ -163,26 +179,31 @@ composables/
 ### 백엔드 구조
 ```
 backend/
-├── src/main/java/com/dit/
-│   ├── DitMesBackendApplication.java   # 메인 진입점
-│   ├── config/
-│   │   └── CorsConfig.java             # CORS 설정
-│   └── menu/                           # 도메인별 레이어 패키지
-│       ├── controller/
-│       ├── service/
-│       ├── persistence/
-│       ├── domain/
-│       └── dto/
-├── src/main/resources/
-│   ├── application.yml
-│   └── mappers/
-│       └── MenuMapper.xml              # MyBatis XML
-└── modules/
-    └── menu/                           # 도메인 모듈
+├── apps/
+│   └── app/                            # 실행 앱 (Spring Boot)
+│       └── src/main/
+│           ├── java/com/dit/
+│           │   ├── AiCodeTestApplication.java  # 메인 진입점
+│           │   ├── config/
+│           │   │   ├── CorsConfig.java         # CORS 설정
+│           │   │   └── GlobalExceptionHandler.java
+│           │   ├── auth/controller/
+│           │   └── menu/controller/
+│           └── resources/
+│               ├── application.yml
+│               ├── application-dev.yml
+│               ├── application-prod.yml
+│               └── mappers/
+│                   ├── AuthMapper.xml
+│                   └── MenuMapper.xml
+└── modules/                            # 도메인 모듈
+    ├── common/                         # 공통 모듈 (ApiResponse, BusinessException)
+    ├── auth/                           # 인증 도메인
+    └── menu/                           # 메뉴 도메인
         └── src/main/java/com/dit/menu/
             ├── controller/
             ├── service/
-            ├── persistence/
+            ├── persistence/mapper/
             ├── domain/
             └── dto/
 ```

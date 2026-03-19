@@ -12,7 +12,6 @@
     <resultMap id="userMap" type="com.dit.auth.domain.User">
         <result column="USER_ID" property="userId" />
         <result column="USER_NAME" property="userName" />
-        <result column="SITE_ID" property="siteId" />
     </resultMap>
 
     <!-- MES 사이트 목록 조회 (SITE_TYPE = 'MES' 인 공장만) -->
@@ -26,7 +25,7 @@
 
     <!-- 사용자 인증 (USER_ID + PASSWORD 일치 시 반환) -->
     <select id="selectUserByIdAndPassword" resultMap="userMap">
-        SELECT USER_ID, USER_NAME, SITE_ID
+        SELECT USER_ID, USER_NAME
         FROM NB_USERS
         WHERE USER_ID = #{userId}
           AND PASSWORD = #{password}

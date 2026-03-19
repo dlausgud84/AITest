@@ -1592,7 +1592,7 @@ const handleSearch = () => {
 }
 const handleReset = () => {
   searchName.value = ''
-  searchGroup.value ''
+  searchGroup.value = ''
   selectedStatuses.value = []
   selectedShifts.value = []
   selectedMenus.value = []

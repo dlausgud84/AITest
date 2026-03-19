@@ -26,8 +26,17 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const handleLogout = () => {
+  // localStorage 전체 정리
   localStorage.removeItem('authToken')
-  localStorage.removeItem('username')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('userName')
+  localStorage.removeItem('siteId')
+  localStorage.removeItem('siteName')
+
+  // 쿠키도 제거 (SSR 미들웨어가 쿠키로 인증 여부 판단)
+  const authCookie = useCookie('authToken')
+  authCookie.value = null
+
   router.push('/login')
 }
 </script>

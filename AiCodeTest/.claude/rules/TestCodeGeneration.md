@@ -2,8 +2,14 @@
 
 ## 목적
 
-구현 전 또는 구현과 병행하여 테스트 코드를 작성함으로써, 요구사항을 명확히 하고 회귀 오류를 방지한다.
+1. 구현 전 또는 구현과 병행하여 테스트 코드를 작성함으로써, 요구사항을 명확히 하고 회귀 오류를 방지한다.
+2. 계층별 테스트 전략 명시 (Backend):Mapper Test: DB 쿼리가 의도대로 동작하는지 확인 (@MybatisTest 등 활용)
+Service Test: Mockito 등을 활용하여 비즈니스 로직의 분기 및 예외(Custom Exception) 검증
+Controller Test: MockMvc를 통해 HTTP 상태 코드 및 ApiResponse 포맷 검증
 
+3. 프론트엔드 Mocking 전략 (Frontend): 백엔드 API가 완성되기 전에도 테스트할 수 있도록 MSW(Mock Service Worker)나 Nuxt 내부의 Mock 데이터를 세팅하는 방법을 추가합니다.
+
+4. Composables/Store 테스트: UI 렌더링뿐만 아니라, 복잡한 로직이 담긴 Vue Composables와 Pinia Store에 대한 Vitest 단위 테스트 작성을 포함합니다.
 ## 백엔드 테스트
 
 ### 단위 테스트 (Service Layer)

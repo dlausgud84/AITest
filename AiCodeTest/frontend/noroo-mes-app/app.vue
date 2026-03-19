@@ -1,27 +1,39 @@
 <template>
   <div id="app">
-    <AppLayout v-if="isAuthenticated">
-      <slot />
+    <!-- 자체 레이아웃을 가진 페이지(메인, 로그인)는 AppLayout 없이 렌더링 -->
+    <AppLayout v-if="showAppLayout">
+      <NuxtPage />
     </AppLayout>
     <NuxtPage v-else />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted } from 'vue'
 
-const router = useRouter()
+const route = useRoute()
 const isAuthenticated = ref(false)
 
-// 인증 상태 확인
-watch(() => router.currentRoute.value.path, () => {
-  // 로그인 페이지가 아닌 경우 인증 체크
-  if (router.currentRoute.value.path !== '/login') {
-    const token = localStorage.getItem('authToken')
-    isAuthenticated.value = !!token
-  }
+// 자체 레이아웃을 포함한 페이지 — AppLayout 미사용
+const standalonePages = ['/', '/login']
+
+const showAppLayout = computed(() =>
+  isAuthenticated.value && !standalonePages.includes(route.path)
+)
+
+function checkAuth() {
+  // localStorage는 클라이언트에서만 접근 가능
+  if (!import.meta.client) return
+  isAuthenticated.value = route.path !== '/login'
+    ? !!localStorage.getItem('authToken')
+    : false
+}
+
+onMounted(() => {
+  checkAuth()
 })
+
+watch(() => route.path, checkAuth)
 </script>
 
 <style>
@@ -33,6 +45,6 @@ watch(() => router.currentRoute.value.path, () => {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #f5f5f5;
+  background-color: #0f1117;
 }
 </style>
