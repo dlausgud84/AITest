@@ -92,6 +92,46 @@ npm run build    # 프로덕션 빌드
 - 프론트엔드: composable 내에서 `try/catch` 후 사용자에게 메시지 표시
 - DB 연결 시 `trustServerCertificate=true` 필수 (자체 서명 인증서 허용)
 
+## 프론트엔드 공통 컴포넌트 가이드
+
+프론트엔드 개발 시 `.claude/frontend/` 폴더의 가이드를 반드시 참조하여 구현한다.
+
+| 가이드 파일 | 대상 컴포넌트 | 주요 내용 |
+|---|---|---|
+| `frontend/common-button-guide.md` | `BaseButton.vue` | 버튼 타입 5종 (search/save/delete/reset/custom), Props, SVG 아이콘, 사용 예시 |
+| `frontend/common-grid-guide.md` | `BaseGrid.vue` | 페이지네이션/내부스크롤/무한스크롤 3가지 모드, 컬럼 리사이즈, 서버사이드 연동 |
+| `frontend/common-components-guide.md` | `BaseTextBox`, `BaseToggleGroup`, `BaseComboBox`, `BaseSelectBox` | 폼 컴포넌트 Props, 특수문자 차단, 다중 선택, 첫 번째 값 자동 선택 |
+
+### 공통 컴포넌트 파일 위치
+
+```
+components/base/
+├── BaseButton.vue          ← 버튼 (common-button-guide.md)
+├── BaseGrid.vue            ← 그리드 (common-grid-guide.md)
+├── BaseTextBox.vue         ← 텍스트박스 (common-components-guide.md)
+├── BaseToggleGroup.vue     ← 토글 그룹 (common-components-guide.md)
+├── BaseComboBox.vue        ← 콤보박스 (common-components-guide.md)
+└── BaseSelectBox.vue       ← 셀렉트박스 (common-components-guide.md)
+
+types/
+├── grid.ts                 ← GridColumn, GridSort, GridPageChange
+└── form.ts                 ← FormOption, FormSize
+
+composables/
+├── useColumnResize.ts      ← 컬럼 너비 드래그 조절
+├── useInfiniteScroll.ts    ← 무한 스크롤 (IntersectionObserver)
+└── useGridPagination.ts    ← 그리드 내장 페이지네이션
+```
+
+### 컴포넌트 사용 원칙
+
+- 컴포넌트명은 반드시 **PascalCase + 두 단어 이상** (`BaseButton` ✅ / `Button` ❌)
+- 공통 컴포넌트는 `Base` 접두사 사용
+- Boolean Props는 `is` / `has` / `can` 접두사 사용 (`isDisabled`, `isLoading`, `hasPagination`)
+- Props는 camelCase로 정의, 템플릿에서는 kebab-case로 사용
+- `<script setup>` + Composition API 사용
+- Emit은 `defineEmits`로 명시적 선언
+
 ## 프론트엔드 공통 모듈 규칙
 
 - **그리드 페이지 필수 패턴**: 필터링 → 정렬 → 페이지네이션 순서로 적용
