@@ -1,6 +1,46 @@
 # CLAUDE.md
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 스킬 사용 지침 (Claude Code Skills)
+
+이 프로젝트에서 코드 작업 시 아래 스킬을 상황에 맞게 반드시 적용한다.
+
+| 상황 | 적용 스킬 | 설명 |
+|------|-----------|------|
+| `.vue` 파일 작성/수정 시 | `vue-best-practices` | Vue 3 공식 스타일 가이드, `<script setup>` 패턴 필수 적용 |
+| Nuxt 파일 작업 시 (pages/, composables/, plugins/, middleware/, nuxt.config.ts) | `nuxt` | SSR/CSR 구분, auto-imports, 하이브리드 렌더링 이슈 확인 |
+| Vue Composition API 작성 시 | `vue` | defineProps/defineEmits, reactivity, Teleport/Suspense 등 |
+| 라우팅/미들웨어 작업 시 | `vue-router-best-practices` | navigation guards, route params, auth middleware |
+| composable 신규 작성 전 | `vueuse` | VueUse에 이미 구현된 패턴인지 먼저 확인 (중복 구현 방지) |
+| 기존 composable 개선 시 | `vueuse-functions` | VueUse 활용한 간결한 패턴으로 개선 |
+| 테스트 코드 작성 시 | `vitest` + `vue-testing-best-practices` | Vitest + Vue Test Utils 패턴 |
+| UI/UX 검토 요청 시 | `web-design-guidelines` | 접근성, 반응형, UX 가이드라인 준수 확인 |
+
+### 적용 제외 스킬 (현재 미사용)
+
+아래 스킬은 이 프로젝트 스택과 무관하므로 적용하지 않는다:
+- `nuxt-ui`, `nuxt-content`, `nuxt-seo`, `nuxt-better-auth`, `nuxthub`, `nuxt-studio`, `nuxt-modules`
+- `reka-ui`, `unocss`, `tresjs`, `motion`
+- `pinia` (현재 상태 관리는 composable 패턴 사용)
+- `ts-library`, `tsdown`, `turborepo`, `pnpm`, `antfu`
+
+---
+
+## 참조 문서 자동 학습 규칙
+
+세션 시작 시 아래 폴더의 **모든 `.md` 파일**을 꼼꼼히 읽고 내용을 완전히 학습한 뒤 작업을 시작한다.
+
+| 폴더 | 용도 | 학습 우선순위 |
+|------|------|--------------|
+| `.claude/rules/` | 개발 단계별 세부 규칙 (조사/계획/구현/검증) | **필수 · 최우선** |
+| `.claude/batch/` | 실행 명령어, 스크립트 가이드 | **필수** |
+| `.claude/frontend/` | 프론트엔드 공통 컴포넌트 가이드 | 프론트 작업 시 필수 |
+| `.claude/backend/` | 백엔드 아키텍처·패턴 가이드 | 백엔드 작업 시 필수 |
+
+> **학습 원칙**: 파일을 "읽은 척"하지 않는다. 각 파일의 규칙이 현재 작업에 어떻게 적용되는지 판단하여 실제로 반영한다.
+
+---
+
 ## 개발 단계별 Rules
 
 모든 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 `.claude/rules/` 폴더를 참조한다.
@@ -32,6 +72,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 6. 항상 "지금 해야 할 것"과 "그 다음 단계"를 분리해서 안내한다.
 7. 실패 가능성이 있다면 반드시 그 원인과 우회 경로(Plan A/B/C)를 구조적으로 설명해야 하며, 단순히 "안됩니다"라고 말하지 않는다.
 8. 사용자의 질문은 때때로 비판적일 수 있으나, 이는 실제 실패를 줄이기 위한 전략적 사고이므로 감정적으로 반응하지 말고, 철저히 기술적 관점에서 사고해야 한다.
+9. 모든 작업이 완료시 " 
+========== 모든 작업이 완료 되었습니다 ========== 
+" 표기 한다.
 
 ## 언어 규칙
 **모든 응답은 반드시 한국어로 작성한다.**
@@ -46,26 +89,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **패키지 베이스**: `com.dit`
 ## 개발 명령어
 
-### 개발 서버 동시 실행 (Windows)
-```bash
-start-dev.bat
-```
-포트 8080/3000의 기존 프로세스를 종료 후 별도 터미널에서 서버를 실행한다.
+> 상세 명령어는 `.claude/batch/DEV_COMMANDS.md` 를 반드시 읽고 적용한다.
 
-### 백엔드
-```bash
-cd backend
-./gradlew :apps:app:bootRun   # 개발 서버 실행 (포트 8080)
-./gradlew build               # 전체 빌드
-```
+| 파일 | 내용 |
+|------|------|
+| `batch/DEV_COMMANDS.md` | 서버 실행, 빌드, 테스트, 포트 충돌 해결, 환경변수 파일 위치 |
 
-### 프론트엔드
-```bash
-cd frontend/noroo-mes-app
-npm install
-npm run dev      # 개발 서버 (포트 3000)
-npm run build    # 프로덕션 빌드
-```
+### 빠른 참조
+
+| 상황 | 명령어 |
+|------|--------|
+| 서버 동시 실행 | `start-dev.bat` (루트 폴더) |
+| 백엔드 개발 서버 | `cd backend && ./gradlew :apps:app:bootRun` |
+| 프론트엔드 개발 서버 | `cd frontend/noroo-mes-app && npm run dev` |
 
 ## 코드 작성 규칙
 
@@ -121,7 +157,13 @@ npm run build    # 프로덕션 빌드
 ### 공통 컴포넌트 파일 위치
 
 ```
-components/base/
+components/                         ← 현재 구현 완료
+├── AppLayout.vue           ← 전체 레이아웃 래퍼
+├── Sidebar.vue             ← 좌측 네비게이션
+├── PageHeader.vue          ← 페이지 상단 타이틀
+└── TablePagination.vue     ← 페이지네이션 UI
+
+components/base/                    ← 향후 확장 예정 (공통 컴포넌트 가이드 기준)
 ├── BaseButton.vue          ← 버튼 (common-button-guide.md)
 ├── BaseGrid.vue            ← 그리드 (common-grid-guide.md)
 ├── BaseTextBox.vue         ← 텍스트박스 (common-components-guide.md)
@@ -213,18 +255,11 @@ backend/
 frontend/noroo-mes-app/
 ├── app.vue                         # 루트 컴포넌트
 ├── nuxt.config.ts
-├── pages/                          # 자동 라우팅 페이지
+├── pages/                          # 자동 라우팅 페이지 (구현 완료)
 │   ├── index.vue                   # 메인(대시보드)
-│   ├── login.vue
-│   ├── menu-management.vue
-│   ├── workorder.vue
-│   ├── production.vue
-│   ├── quality.vue
-│   ├── equipment.vue
-│   ├── master.vue
-│   ├── settings.vue
-│   ├── user-management.vue
-│   └── kiosk.vue
+│   ├── login.vue                   # 로그인
+│   ├── menu-management.vue         # 메뉴 관리
+│   └── settings.vue                # 설정
 ├── components/                     # 공통 컴포넌트
 │   ├── AppLayout.vue               # 전체 레이아웃 래퍼
 │   ├── Sidebar.vue                 # 좌측 네비게이션

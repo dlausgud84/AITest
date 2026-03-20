@@ -1,27 +1,62 @@
 <template>
-  <div class="main-layout">
-    <!-- 상단 헤더 -->
-    <header class="top-header">
-      <div class="header-left">
+  <div class="page-layout">
+
+    <!-- ══ TOP BAR ══ -->
+    <header class="top-bar">
+      <!-- 좌측: 로고 -->
+      <div class="top-left">
         <div class="logo">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <rect x="2" y="2" width="10" height="10" rx="2" fill="#6c8fff"/>
-            <rect x="16" y="2" width="10" height="10" rx="2" fill="#6c8fff" opacity="0.6"/>
-            <rect x="2" y="16" width="10" height="10" rx="2" fill="#6c8fff" opacity="0.6"/>
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <rect x="2"  y="2"  width="10" height="10" rx="2" fill="#6c8fff"/>
+            <rect x="16" y="2"  width="10" height="10" rx="2" fill="#6c8fff" opacity="0.55"/>
+            <rect x="2"  y="16" width="10" height="10" rx="2" fill="#6c8fff" opacity="0.55"/>
             <rect x="16" y="16" width="10" height="10" rx="2" fill="#6c8fff"/>
           </svg>
           <span class="logo-text">NeoMES</span>
         </div>
         <div class="site-badge" v-if="siteName">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
             <path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="#6c8fff"/>
           </svg>
           {{ siteName }}
         </div>
       </div>
-      <div class="header-right">
+
+      <!-- 우측: 테마 토글 + 날짜/시간 + 사용자 + 로그아웃 -->
+      <div class="top-right">
+        <!-- 테마 토글 스위치 -->
+        <button
+          class="theme-switch"
+          :class="{ 'is-light': theme === 'light' }"
+          @click="toggleTheme"
+          :title="theme === 'dark' ? '화이트 테마로 전환' : '블랙 테마로 전환'"
+          :aria-label="theme === 'dark' ? '화이트 테마로 전환' : '블랙 테마로 전환'"
+        >
+          <span class="switch-track">
+            <span class="switch-knob">
+              <!-- 달 아이콘 (블랙 모드) -->
+              <svg v-if="theme === 'dark'" width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <path d="M13.5 10.5a6 6 0 0 1-8-8 6 6 0 1 0 8 8z" fill="currentColor"/>
+              </svg>
+              <!-- 태양 아이콘 (화이트 모드) -->
+              <svg v-else width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="3" fill="currentColor"/>
+                <path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </span>
+        </button>
+
         <ClientOnly>
-          <div class="user-info">
+          <!-- 날짜·시간 -->
+          <div class="top-datetime">
+            <span class="datetime-date">{{ currentDate }}</span>
+            <span class="datetime-sep">|</span>
+            <span class="datetime-time">{{ currentTime }}</span>
+          </div>
+
+          <!-- 사용자 정보 -->
+          <div class="top-user">
             <div class="user-avatar">{{ userInitial }}</div>
             <div class="user-detail">
               <span class="user-name">{{ userName }}</span>
@@ -29,8 +64,10 @@
             </div>
           </div>
         </ClientOnly>
-        <button class="logout-btn" @click="handleLogout">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+
+        <!-- 로그아웃 버튼 -->
+        <button class="btn-logout" @click="handleLogout">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
             <path d="M6 14H3C2.45 14 2 13.55 2 13V3C2 2.45 2.45 2 3 2H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             <path d="M10 11L14 8L10 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M14 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -40,240 +77,139 @@
       </div>
     </header>
 
-    <!-- 메인 콘텐츠 -->
-    <main class="main-content">
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div
+          v-for="section in menuSections"
+          :key="section.id"
+          class="nav-section"
+        >
+          <!-- 섹션 헤더 -->
+          <button
+            class="nav-section-header"
+            :class="{ open: section.open }"
+            @click="section.open = !section.open"
+          >
+            <span class="nav-section-icon" :class="section.colorClass">
+              <component :is="section.icon" />
+            </span>
+            <span class="nav-section-title">{{ section.title }}</span>
+            <span class="nav-section-badge">{{ section.badge }}</span>
+            <svg class="nav-chevron" :class="{ rotated: section.open }" width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <!-- 섹션 하위 메뉴 -->
+          <div class="nav-items" :class="{ visible: section.open }">
+            <button
+              v-for="item in section.items"
+              :key="item.id"
+              class="nav-item"
+              @click="navigate(item.path)"
+            >
+              <span class="nav-item-dot" :class="section.colorClass" />
+              <span class="nav-item-label">{{ item.title }}</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ══ CONTENT ══ -->
+    <main class="content">
       <!-- 환영 배너 -->
-      <div class="welcome-banner">
-        <div class="banner-text">
+      <div class="welcome-card">
+        <div class="welcome-text">
           <ClientOnly>
             <h1>안녕하세요, <strong>{{ userName }}</strong>님</h1>
             <template #fallback><h1>안녕하세요!</h1></template>
           </ClientOnly>
           <p>NeoMES 제조실행시스템에 오신 것을 환영합니다.</p>
         </div>
-        <ClientOnly>
-          <div class="banner-stats">
-            <div class="stat-item">
-              <span class="stat-value">{{ currentDate }}</span>
-              <span class="stat-label">오늘 날짜</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <span class="stat-value">{{ currentTime }}</span>
-              <span class="stat-label">현재 시간</span>
-            </div>
-          </div>
-        </ClientOnly>
+        <div class="welcome-badge">MES</div>
       </div>
 
-      <!-- 메뉴 섹션 -->
-      <div class="menu-sections">
-        <!-- 생산 실행 -->
-        <div class="menu-section">
-          <div class="section-header">
-            <div class="section-icon production">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M2 16L6 8L10 12L14 6L18 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h2 class="section-title">생산 실행</h2>
-            <span class="section-badge">NGP</span>
+      <!-- 요약 카드 4개 -->
+      <div class="summary-grid">
+        <div class="summary-card" v-for="stat in summaryStats" :key="stat.id">
+          <div class="summary-icon" :class="stat.colorClass">
+            <component :is="stat.icon" />
           </div>
-          <div class="menu-cards">
-            <div class="menu-card" v-for="item in productionMenus" :key="item.id" @click="navigate(item.path)">
-              <div class="card-icon" :class="item.iconClass">
-                <component :is="item.icon" />
-              </div>
-              <div class="card-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.description }}</p>
-              </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </div>
+          <div class="summary-body">
+            <span class="summary-label">{{ stat.label }}</span>
+            <span class="summary-value" :class="stat.colorClass">{{ stat.value }}</span>
           </div>
         </div>
+      </div>
 
-        <!-- 생산 계획 -->
-        <div class="menu-section">
-          <div class="section-header">
-            <div class="section-icon planning">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M7 10H13M7 7H10M7 13H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
+      <!-- 빠른 메뉴 -->
+      <div class="quick-section">
+        <h2 class="quick-title">빠른 메뉴</h2>
+        <div class="quick-grid">
+          <button
+            v-for="item in quickMenus"
+            :key="item.id"
+            class="quick-card"
+            @click="navigate(item.path)"
+          >
+            <div class="quick-icon" :class="item.colorClass">
+              <component :is="item.icon" />
             </div>
-            <h2 class="section-title">생산 계획</h2>
-            <span class="section-badge">PM</span>
-          </div>
-          <div class="menu-cards">
-            <div class="menu-card" v-for="item in planningMenus" :key="item.id" @click="navigate(item.path)">
-              <div class="card-icon" :class="item.iconClass">
-                <component :is="item.icon" />
-              </div>
-              <div class="card-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.description }}</p>
-              </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
+            <div class="quick-body">
+              <span class="quick-name">{{ item.title }}</span>
+              <span class="quick-desc">{{ item.description }}</span>
             </div>
-          </div>
-        </div>
-
-        <!-- 품질 관리 -->
-        <div class="menu-section">
-          <div class="section-header">
-            <div class="section-icon quality">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h2 class="section-title">품질 관리</h2>
-            <span class="section-badge">QTM</span>
-          </div>
-          <div class="menu-cards">
-            <div class="menu-card" v-for="item in qualityMenus" :key="item.id" @click="navigate(item.path)">
-              <div class="card-icon" :class="item.iconClass">
-                <component :is="item.icon" />
-              </div>
-              <div class="card-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.description }}</p>
-              </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 설비 관리 -->
-        <div class="menu-section">
-          <div class="section-header">
-            <div class="section-icon equipment">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M10 2V5M10 15V18M2 10H5M15 10H18M4.1 4.1L6.2 6.2M13.8 13.8L15.9 15.9M15.9 4.1L13.8 6.2M6.2 13.8L4.1 15.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h2 class="section-title">설비 관리</h2>
-            <span class="section-badge">EQP</span>
-          </div>
-          <div class="menu-cards">
-            <div class="menu-card" v-for="item in equipmentMenus" :key="item.id" @click="navigate(item.path)">
-              <div class="card-icon" :class="item.iconClass">
-                <component :is="item.icon" />
-              </div>
-              <div class="card-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.description }}</p>
-              </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 공통/마스터 -->
-        <div class="menu-section">
-          <div class="section-header">
-            <div class="section-icon master">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M3 5H17M3 10H17M3 15H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h2 class="section-title">마스터 데이터</h2>
-            <span class="section-badge">CMN</span>
-          </div>
-          <div class="menu-cards">
-            <div class="menu-card" v-for="item in masterMenus" :key="item.id" @click="navigate(item.path)">
-              <div class="card-icon" :class="item.iconClass">
-                <component :is="item.icon" />
-              </div>
-              <div class="card-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.description }}</p>
-              </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 리포트/시스템 -->
-        <div class="menu-section">
-          <div class="section-header">
-            <div class="section-icon report">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M4 2H16V18H4V2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                <path d="M7 7H13M7 10H13M7 13H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h2 class="section-title">리포트 / 시스템</h2>
-            <span class="section-badge">RPT</span>
-          </div>
-          <div class="menu-cards">
-            <div class="menu-card" v-for="item in reportMenus" :key="item.id" @click="navigate(item.path)">
-              <div class="card-icon" :class="item.iconClass">
-                <component :is="item.icon" />
-              </div>
-              <div class="card-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.description }}</p>
-              </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+            <svg class="quick-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
       </div>
     </main>
+
+    <!-- ══ FOOTER ══ -->
+    <footer class="footer">
+      <span class="footer-company">NOROO Information System Co., Ltd.</span>
+      <span class="footer-sep">|</span>
+      <span class="footer-copy">© {{ currentYear }} NeoMES. All rights reserved.</span>
+      <span class="footer-sep">|</span>
+      <span class="footer-version">v1.0.0</span>
+    </footer>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, defineComponent, h } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, defineComponent, h } from 'vue'
+import { useTheme } from '~/composables/useTheme'
 
 const router = useRouter()
+const { theme, initTheme, toggleTheme } = useTheme()
 
-// 사용자 정보 (초기값 빈값 → onMounted에서 localStorage 읽음)
+/* ── 사용자 정보 ── */
 const userName = ref('')
-const userId = ref('')
+const userId   = ref('')
 const siteName = ref('')
 
-// 현재 시간
+const userInitial = computed(() =>
+  userName.value ? userName.value.charAt(0).toUpperCase() : 'U'
+)
+
+/* ── 날짜·시간 ── */
 const currentDate = ref('')
 const currentTime = ref('')
+const currentYear = new Date().getFullYear()
 let timer: ReturnType<typeof setInterval>
-
-const userInitial = computed(() => {
-  return userName.value ? userName.value.charAt(0) : 'U'
-})
 
 function updateTime() {
   const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  currentDate.value = `${y}.${m}.${d}`
+  const y  = now.getFullYear()
+  const mo = String(now.getMonth() + 1).padStart(2, '0')
+  const d  = String(now.getDate()).padStart(2, '0')
+  const dw = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()]
+  currentDate.value = `${y}.${mo}.${d} (${dw})`
   const hh = String(now.getHours()).padStart(2, '0')
   const mm = String(now.getMinutes()).padStart(2, '0')
   const ss = String(now.getSeconds()).padStart(2, '0')
@@ -281,18 +217,19 @@ function updateTime() {
 }
 
 onMounted(() => {
-  userName.value = localStorage.getItem('userName') || localStorage.getItem('username') || '사용자'
-  userId.value = localStorage.getItem('userId') || ''
+  // 저장된 테마 복원 (CSR에서만 실행)
+  initTheme()
+
+  userName.value = localStorage.getItem('userName') || '사용자'
+  userId.value   = localStorage.getItem('userId')   || ''
   siteName.value = localStorage.getItem('siteName') || localStorage.getItem('siteId') || ''
   updateTime()
   timer = setInterval(updateTime, 1000)
 })
 
-onUnmounted(() => {
-  clearInterval(timer)
-})
+onUnmounted(() => clearInterval(timer))
 
-// 로그아웃
+/* ── 로그아웃 ── */
 function handleLogout() {
   localStorage.removeItem('authToken')
   localStorage.removeItem('userId')
@@ -304,352 +241,156 @@ function handleLogout() {
   router.push('/login')
 }
 
-// 페이지 이동
+/* ── 페이지 이동 ── */
 function navigate(path: string) {
   router.push(path)
 }
 
-// SVG 아이콘 컴포넌트
-const LotIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('rect', { x: 2, y: 4, width: 18, height: 14, rx: 2, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M7 11H15M7 8H11M7 14H13', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
+/* ── SVG 아이콘 ── */
+const makeIcon = (pathD: string) =>
+  defineComponent({ render: () =>
+    h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none' },
+      [h('path', { d: pathD, stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })]
+    )
+  })
 
-const ProcessIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('circle', { cx: 5, cy: 11, r: 3, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('circle', { cx: 17, cy: 11, r: 3, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M8 11H14', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
+const IconProduction = makeIcon('M2 16L6 8L10 12L14 6L18 10')
+const IconPlanning   = makeIcon('M3 5H17M3 10H17M3 15H11')
+const IconQuality    = makeIcon('M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2')
+const IconEquipment  = makeIcon('M10 3V6M10 14V17M3 10H6M14 10H17M5.1 5.1L7.2 7.2M12.8 12.8L14.9 14.9')
+const IconMaster     = makeIcon('M3 5H17M3 10H17M3 15H11')
+const IconReport     = makeIcon('M4 2H16V18H4V2ZM7 7H13M7 11H13M7 15H10')
+const IconMenu       = makeIcon('M3 6H17M3 11H17M3 16H13')
+const IconSettings   = makeIcon('M10 13A3 3 0 1 0 10 7 3 3 0 0 0 10 13ZM10 2V4M10 16V18M2 10H4M16 10H18')
 
-const TrackingIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M3 18L7 10L11 14L15 7L19 11', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-    h('circle', { cx: 19, cy: 11, r: 2, fill: 'currentColor' })
-  ])
-})
-
-const OrderIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M4 3H18L20 7H2L4 3Z', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linejoin': 'round' }),
-    h('rect', { x: 2, y: 7, width: 18, height: 12, rx: 1, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M9 7V19', stroke: 'currentColor', 'stroke-width': 1.5 })
-  ])
-})
-
-const WorkOrderIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('rect', { x: 3, y: 2, width: 16, height: 18, rx: 2, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M7 7H15M7 11H13M7 15H10', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' }),
-    h('path', { d: 'M13 14L15 16L19 12', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
-  ])
-})
-
-const PlanIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('rect', { x: 3, y: 4, width: 16, height: 15, rx: 2, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M7 2V6M15 2V6M3 9H19', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' }),
-    h('path', { d: 'M7 13H10M7 16H13', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
-
-const QualityCheckIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M11 2L13.5 7.5L19 8.5L15 12.5L16 19L11 16.5L6 19L7 12.5L3 8.5L8.5 7.5L11 2Z', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linejoin': 'round' })
-  ])
-})
-
-const InspectionIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('circle', { cx: 10, cy: 10, r: 6, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M14.5 14.5L19 19', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round' }),
-    h('path', { d: 'M8 10L10 12L13 8', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
-  ])
-})
-
-const MonitorIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('rect', { x: 2, y: 3, width: 18, height: 13, rx: 2, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M8 19H14M11 16V19', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' }),
-    h('path', { d: 'M6 12L8 9L10 11L13 7L16 10', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
-  ])
-})
-
-const EqpStatusIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('circle', { cx: 11, cy: 11, r: 4, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M11 3V6M11 16V19M3 11H6M16 11H19M5.1 5.1L7.2 7.2M14.8 14.8L16.9 16.9M16.9 5.1L14.8 7.2M7.2 14.8L5.1 16.9', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
-
-const EqpEventIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M11 4V11L15 13', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-    h('circle', { cx: 11, cy: 11, r: 8, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('circle', { cx: 17, cy: 5, r: 3, fill: '#ff6b6b' })
-  ])
-})
-
-const EqpMaintIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M14.5 3.5C15.3 4.3 15.3 5.7 14.5 6.5L6.5 14.5C5.7 15.3 4.3 15.3 3.5 14.5C2.7 13.7 2.7 12.3 3.5 11.5L11.5 3.5C12.3 2.7 13.7 2.7 14.5 3.5Z', stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M16 6L19 3M14 16C14 18.2 15.8 20 18 20C18 17.8 16.2 16 14 16Z', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
-
-const MaterialIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M11 2L20 7V15L11 20L2 15V7L11 2Z', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linejoin': 'round' }),
-    h('path', { d: 'M11 2V20M2 7L11 12L20 7', stroke: 'currentColor', 'stroke-width': 1.5 })
-  ])
-})
-
-const ShiftIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('circle', { cx: 11, cy: 11, r: 8, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M11 6V11L14 14', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-    h('path', { d: 'M5 2L2 5M17 2L20 5', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
-
-const UserMgmtIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('circle', { cx: 9, cy: 7, r: 4, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M2 19C2 15.7 5.1 13 9 13', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round' }),
-    h('path', { d: 'M16 14L18 16L21 12', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-    h('circle', { cx: 18, cy: 16, r: 4, stroke: 'currentColor', 'stroke-width': 1.5 })
-  ])
-})
-
-const ReportIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('rect', { x: 4, y: 2, width: 14, height: 18, rx: 2, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('path', { d: 'M8 7H14M8 11H14M8 15H11', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
-
-const DashboardIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('rect', { x: 2, y: 2, width: 8, height: 8, rx: 1, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('rect', { x: 12, y: 2, width: 8, height: 8, rx: 1, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('rect', { x: 2, y: 12, width: 8, height: 8, rx: 1, stroke: 'currentColor', 'stroke-width': 1.8 }),
-    h('rect', { x: 12, y: 12, width: 8, height: 8, rx: 1, stroke: 'currentColor', 'stroke-width': 1.8 })
-  ])
-})
-
-const MenuMgmtIcon = defineComponent({
-  render: () => h('svg', { width: 22, height: 22, viewBox: '0 0 22 22', fill: 'none' }, [
-    h('path', { d: 'M3 6H19M3 11H19M3 16H13', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round' }),
-    h('circle', { cx: 17, cy: 16, r: 3, stroke: 'currentColor', 'stroke-width': 1.5 }),
-    h('path', { d: 'M19.5 18.5L21 20', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round' })
-  ])
-})
-
-// 메뉴 데이터
-const productionMenus = [
+/* ── 사이드바 메뉴 데이터 ── */
+const menuSections = reactive([
   {
-    id: 'lot',
-    title: 'LOT 관리',
-    description: 'LOT 생성, 진행, 완료 현황 관리',
-    path: '/lot',
-    iconClass: 'icon-blue',
-    icon: LotIcon
+    id: 'production', title: '생산 실행', badge: 'NGP',
+    colorClass: 'color-blue', open: true, icon: IconProduction,
+    items: [
+      { id: 'lot',      title: 'LOT 관리',  path: '/lot' },
+      { id: 'process',  title: '공정 실적', path: '/production' },
+      { id: 'tracking', title: 'LOT 추적',  path: '/lot-tracking' },
+    ]
   },
   {
-    id: 'process',
-    title: '공정 실적',
-    description: '공정별 생산 실적 등록 및 조회',
-    path: '/production',
-    iconClass: 'icon-cyan',
-    icon: ProcessIcon
+    id: 'planning', title: '생산 계획', badge: 'PM',
+    colorClass: 'color-green', open: false, icon: IconPlanning,
+    items: [
+      { id: 'plan',      title: '생산 계획',  path: '/plan' },
+      { id: 'workorder', title: '작업 지시',  path: '/workorder' },
+      { id: 'order',     title: '주문 관리',  path: '/order' },
+    ]
   },
   {
-    id: 'tracking',
-    title: 'LOT 추적',
-    description: 'LOT 이력 및 이동 경로 추적',
-    path: '/lot-tracking',
-    iconClass: 'icon-purple',
-    icon: TrackingIcon
-  }
+    id: 'quality', title: '품질 관리', badge: 'QTM',
+    colorClass: 'color-yellow', open: false, icon: IconQuality,
+    items: [
+      { id: 'qcheck',  title: '품질 검사',    path: '/quality' },
+      { id: 'defect',  title: '불량 관리',    path: '/defect' },
+      { id: 'qtm',     title: 'QTM 모니터링', path: '/qtm' },
+    ]
+  },
+  {
+    id: 'equipment', title: '설비 관리', badge: 'EQP',
+    colorClass: 'color-purple', open: false, icon: IconEquipment,
+    items: [
+      { id: 'eqp-status', title: '설비 현황',  path: '/equipment' },
+      { id: 'eqp-event',  title: '설비 이벤트', path: '/eqp-event' },
+      { id: 'eqp-maint',  title: '설비 보전',  path: '/eqp-maintenance' },
+    ]
+  },
+  {
+    id: 'master', title: '마스터 데이터', badge: 'CMN',
+    colorClass: 'color-cyan', open: false, icon: IconMaster,
+    items: [
+      { id: 'material', title: '자재 마스터', path: '/master' },
+      { id: 'shift',    title: '교대 관리',   path: '/shift' },
+      { id: 'user',     title: '사용자 관리', path: '/user-management' },
+    ]
+  },
+  {
+    id: 'report', title: '리포트 / 시스템', badge: 'RPT',
+    colorClass: 'color-red', open: false, icon: IconReport,
+    items: [
+      { id: 'rpt-prod',  title: '생산 실적 리포트', path: '/report-production' },
+      { id: 'rpt-qual',  title: '품질 분석 리포트', path: '/report-quality' },
+      { id: 'menu-mgt',  title: '메뉴 관리',        path: '/menu-management' },
+    ]
+  },
+])
+
+/* ── 요약 통계 카드 ── */
+const summaryStats = [
+  { id: 1, label: '오늘 생산 LOT', value: '–',  colorClass: 'color-blue',   icon: IconProduction },
+  { id: 2, label: '진행 중 공정',  value: '–',  colorClass: 'color-green',  icon: IconPlanning   },
+  { id: 3, label: '품질 이슈',     value: '–',  colorClass: 'color-yellow', icon: IconQuality    },
+  { id: 4, label: '설비 알람',     value: '–',  colorClass: 'color-red',    icon: IconEquipment  },
 ]
 
-const planningMenus = [
+/* ── 빠른 메뉴 ── */
+const quickMenus = [
   {
-    id: 'plan',
-    title: '생산 계획',
-    description: '월/일별 생산 계획 수립 및 관리',
-    path: '/plan',
-    iconClass: 'icon-green',
-    icon: PlanIcon
+    id: 'menu-mgt', title: '메뉴 관리',
+    description: '메뉴 CRUD 및 권한 설정',
+    path: '/menu-management', colorClass: 'color-blue', icon: IconMenu
   },
   {
-    id: 'workorder',
-    title: '작업 지시',
-    description: '작업지시 발행 및 현황 관리',
-    path: '/workorder',
-    iconClass: 'icon-orange',
-    icon: WorkOrderIcon
+    id: 'settings', title: '시스템 설정',
+    description: '환경 설정 및 운영 정보',
+    path: '/settings', colorClass: 'color-purple', icon: IconSettings
   },
-  {
-    id: 'order',
-    title: '주문 관리',
-    description: '고객 주문 등록 및 진행 현황',
-    path: '/order',
-    iconClass: 'icon-yellow',
-    icon: OrderIcon
-  }
-]
-
-const qualityMenus = [
-  {
-    id: 'quality-check',
-    title: '품질 검사',
-    description: '수입/공정/출하 검사 결과 관리',
-    path: '/quality',
-    iconClass: 'icon-red',
-    icon: QualityCheckIcon
-  },
-  {
-    id: 'inspection',
-    title: '불량 관리',
-    description: '불량 유형별 현황 및 원인 분석',
-    path: '/defect',
-    iconClass: 'icon-pink',
-    icon: InspectionIcon
-  },
-  {
-    id: 'qtm-monitor',
-    title: 'QTM 모니터링',
-    description: '실시간 품질 지표 모니터링',
-    path: '/qtm',
-    iconClass: 'icon-indigo',
-    icon: MonitorIcon
-  }
-]
-
-const equipmentMenus = [
-  {
-    id: 'eqp-status',
-    title: '설비 현황',
-    description: '설비 가동/비가동 상태 조회',
-    path: '/equipment',
-    iconClass: 'icon-teal',
-    icon: EqpStatusIcon
-  },
-  {
-    id: 'eqp-event',
-    title: '설비 이벤트',
-    description: '설비 알람 및 이벤트 이력 조회',
-    path: '/eqp-event',
-    iconClass: 'icon-amber',
-    icon: EqpEventIcon
-  },
-  {
-    id: 'eqp-maint',
-    title: '설비 보전',
-    description: '예방/사후 보전 계획 및 이력',
-    path: '/eqp-maintenance',
-    iconClass: 'icon-lime',
-    icon: EqpMaintIcon
-  }
-]
-
-const masterMenus = [
-  {
-    id: 'material',
-    title: '자재 마스터',
-    description: '원자재/반제품/완제품 마스터 관리',
-    path: '/master',
-    iconClass: 'icon-sky',
-    icon: MaterialIcon
-  },
-  {
-    id: 'shift',
-    title: '교대 관리',
-    description: '교대 조편성 및 근무 일정 관리',
-    path: '/shift',
-    iconClass: 'icon-violet',
-    icon: ShiftIcon
-  },
-  {
-    id: 'user-mgmt',
-    title: '사용자 관리',
-    description: '사용자 등록 및 권한 관리',
-    path: '/user-management',
-    iconClass: 'icon-rose',
-    icon: UserMgmtIcon
-  }
-]
-
-const reportMenus = [
-  {
-    id: 'production-report',
-    title: '생산 실적 리포트',
-    description: '일/주/월별 생산 실적 통계',
-    path: '/report-production',
-    iconClass: 'icon-blue',
-    icon: ReportIcon
-  },
-  {
-    id: 'quality-report',
-    title: '품질 분석 리포트',
-    description: '불량률, 수율, SPC 분석 리포트',
-    path: '/report-quality',
-    iconClass: 'icon-green',
-    icon: DashboardIcon
-  },
-  {
-    id: 'menu-management',
-    title: '메뉴 관리',
-    description: '시스템 메뉴 구성 및 권한 설정',
-    path: '/menu-management',
-    iconClass: 'icon-gray',
-    icon: MenuMgmtIcon
-  }
 ]
 </script>
 
 <style scoped>
-/* ── 전체 레이아웃 ── */
-.main-layout {
-  min-height: 100vh;
-  background: #0f1117;
-  color: #e0e4ef;
-  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+/* ════════════════════════════════════
+   CSS Grid 4-Zone 레이아웃
+════════════════════════════════════ */
+.page-layout {
+  display: grid;
+  grid-template-rows: 56px 1fr 40px;
+  grid-template-columns: 220px 1fr;
+  grid-template-areas:
+    "top     top"
+    "sidebar content"
+    "footer  footer";
+  height: 100vh;
+  overflow: hidden;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-/* ── 상단 헤더 ── */
-.top-header {
+/* ══ TOP BAR ══ */
+.top-bar {
+  grid-area: top;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px;
-  height: 60px;
-  background: rgba(18, 20, 30, 0.95);
-  border-bottom: 1px solid rgba(108, 143, 255, 0.15);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(10px);
+  padding: 0 20px 0 24px;
+  background: var(--top-bg);
+  border-bottom: 1px solid var(--top-border);
+  z-index: 50;
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
-.header-left {
+.top-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .logo-text {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   background: linear-gradient(135deg, #6c8fff, #a78bfa);
   -webkit-background-clip: text;
@@ -662,330 +403,524 @@ const reportMenus = [
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
-  background: rgba(108, 143, 255, 0.12);
-  border: 1px solid rgba(108, 143, 255, 0.25);
+  padding: 4px 11px;
+  background: rgba(108, 143, 255, 0.1);
+  border: 1px solid rgba(108, 143, 255, 0.22);
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
   color: #8ba4ff;
+  letter-spacing: 0.3px;
 }
 
-.header-right {
+.top-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
-.user-info {
+/* ── 테마 토글 스위치 ── */
+.theme-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.switch-track {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 13px;
+  background: rgba(30, 40, 90, 0.6);
+  border: 1px solid var(--card-border);
+  position: relative;
+  transition: background 0.35s ease, border-color 0.35s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.theme-switch.is-light .switch-track {
+  background: rgba(255, 185, 30, 0.18);
+  border-color: rgba(220, 155, 0, 0.38);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #6c8fff;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  color: #fff;
+  transition: left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+}
+
+.theme-switch.is-light .switch-knob {
+  left: calc(100% - 21px);
+  background: #f5a623;
+}
+
+/* 날짜·시간 */
+.top-datetime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.datetime-date {
+  color: var(--text-secondary);
+}
+
+.datetime-sep {
+  color: var(--text-dim);
+}
+
+.datetime-time {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+/* 사용자 */
+.top-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
 }
 
 .user-avatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, #6c8fff, #a78bfa);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: white;
+  color: #fff;
+  flex-shrink: 0;
 }
 
 .user-detail {
   display: flex;
   flex-direction: column;
+  line-height: 1.3;
 }
 
 .user-name {
   font-size: 13px;
   font-weight: 600;
-  color: #e0e4ef;
-  line-height: 1.3;
+  color: var(--text-primary);
 }
 
 .user-id {
   font-size: 11px;
-  color: #6b7280;
-  line-height: 1.3;
+  color: var(--text-muted);
 }
 
-.logout-btn {
+/* 로그아웃 */
+.btn-logout {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: rgba(255, 99, 99, 0.1);
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(255, 99, 99, 0.08);
   border: 1px solid rgba(255, 99, 99, 0.2);
   border-radius: 6px;
   color: #ff8080;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.logout-btn:hover {
-  background: rgba(255, 99, 99, 0.2);
+.btn-logout:hover {
+  background: rgba(255, 99, 99, 0.18);
   border-color: rgba(255, 99, 99, 0.4);
 }
 
-/* ── 메인 콘텐츠 ── */
-.main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 28px 28px 48px;
+/* ══ SIDEBAR ══ */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
-/* ── 환영 배너 ── */
-.welcome-banner {
+.sidebar-nav {
+  padding: 12px 0 20px;
+}
+
+/* 섹션 헤더 */
+.nav-section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, rgba(108, 143, 255, 0.12) 0%, rgba(167, 139, 250, 0.08) 100%);
-  border: 1px solid rgba(108, 143, 255, 0.2);
-  border-radius: 14px;
-  padding: 24px 32px;
-  margin-bottom: 32px;
-}
-
-.banner-text h1 {
-  font-size: 22px;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 16px;
+  background: none;
+  border: none;
+  color: var(--nav-text-color);
+  font-size: 12px;
   font-weight: 600;
-  color: #e0e4ef;
-  margin: 0 0 6px;
-}
-
-.banner-text h1 strong {
-  color: #8ba4ff;
-}
-
-.banner-text p {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.banner-stats {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #8ba4ff;
-  letter-spacing: 1px;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: #4b5563;
-}
-
-.stat-divider {
-  width: 1px;
-  height: 40px;
-  background: rgba(108, 143, 255, 0.2);
-}
-
-/* ── 메뉴 섹션 ── */
-.menu-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-.menu-section {
-  background: rgba(18, 20, 30, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  padding: 20px 24px 24px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.section-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.section-icon.production { background: rgba(108, 143, 255, 0.15); color: #6c8fff; }
-.section-icon.planning   { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-.section-icon.quality    { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-.section-icon.equipment  { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
-.section-icon.master     { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
-.section-icon.report     { background: rgba(251, 113, 133, 0.15); color: #fb7185; }
-
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #c8d0e7;
-  margin: 0;
-}
-
-.section-badge {
-  margin-left: 4px;
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  font-size: 10px;
-  color: #4b5563;
-  letter-spacing: 0.5px;
-}
-
-/* ── 메뉴 카드 ── */
-.menu-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-}
-
-.menu-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
+  transition: color 0.2s, background 0.2s;
+  text-align: left;
+  letter-spacing: 0.3px;
 }
 
-.menu-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(108, 143, 255, 0.05), transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
+.nav-section-header:hover,
+.nav-section-header.open {
+  color: var(--nav-text-open);
+  background: var(--nav-hover-bg);
 }
 
-.menu-card:hover {
-  border-color: rgba(108, 143, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.menu-card:hover::before {
-  opacity: 1;
-}
-
-.card-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+.nav-section-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.icon-blue   { background: rgba(108, 143, 255, 0.15); color: #6c8fff; }
-.icon-cyan   { background: rgba(34, 211, 238, 0.15);  color: #22d3ee; }
-.icon-purple { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
-.icon-green  { background: rgba(52, 211, 153, 0.15);  color: #34d399; }
-.icon-orange { background: rgba(251, 146, 60, 0.15);  color: #fb923c; }
-.icon-yellow { background: rgba(251, 191, 36, 0.15);  color: #fbbf24; }
-.icon-red    { background: rgba(248, 113, 113, 0.15); color: #f87171; }
-.icon-pink   { background: rgba(244, 114, 182, 0.15); color: #f472b6; }
-.icon-indigo { background: rgba(99, 102, 241, 0.15);  color: #818cf8; }
-.icon-teal   { background: rgba(45, 212, 191, 0.15);  color: #2dd4bf; }
-.icon-amber  { background: rgba(245, 158, 11, 0.15);  color: #f59e0b; }
-.icon-lime   { background: rgba(163, 230, 53, 0.15);  color: #a3e635; }
-.icon-sky    { background: rgba(56, 189, 248, 0.15);  color: #38bdf8; }
-.icon-violet { background: rgba(139, 92, 246, 0.15);  color: #8b5cf6; }
-.icon-rose   { background: rgba(251, 113, 133, 0.15); color: #fb7185; }
-.icon-gray   { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
-
-.card-content {
+.nav-section-title {
   flex: 1;
   min-width: 0;
 }
 
-.card-content h3 {
+.nav-section-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  background: var(--nav-badge-bg);
+  border: 1px solid var(--nav-badge-border);
+  border-radius: 8px;
+  color: var(--nav-badge-color);
+  letter-spacing: 0.5px;
+}
+
+.nav-chevron {
+  color: var(--nav-dot-color);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.nav-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* 섹션 하위 아이템 */
+.nav-items {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease;
+}
+
+.nav-items.visible {
+  max-height: 300px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 16px 7px 28px;
+  background: none;
+  border: none;
+  color: var(--nav-item-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  text-align: left;
+}
+
+.nav-item:hover {
+  color: var(--nav-text-open);
+  background: var(--nav-item-hover);
+}
+
+.nav-item-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.nav-item:hover .nav-item-dot {
+  opacity: 1;
+}
+
+.nav-item-label {
+  flex: 1;
+}
+
+/* 섹션 색상 */
+.color-blue   { background: rgba(108, 143, 255, 0.14); color: #6c8fff; }
+.color-green  { background: rgba(52,  211, 153, 0.14); color: #34d399; }
+.color-yellow { background: rgba(251, 191,  36, 0.14); color: #fbbf24; }
+.color-purple { background: rgba(167, 139, 250, 0.14); color: #a78bfa; }
+.color-cyan   { background: rgba(56,  189, 248, 0.14); color: #38bdf8; }
+.color-red    { background: rgba(251, 113, 133, 0.14); color: #fb7185; }
+
+.nav-item-dot.color-blue   { background: #6c8fff; }
+.nav-item-dot.color-green  { background: #34d399; }
+.nav-item-dot.color-yellow { background: #fbbf24; }
+.nav-item-dot.color-purple { background: #a78bfa; }
+.nav-item-dot.color-cyan   { background: #38bdf8; }
+.nav-item-dot.color-red    { background: #fb7185; }
+
+/* ══ CONTENT ══ */
+.content {
+  grid-area: content;
+  overflow-y: auto;
+  padding: 24px 28px 28px;
+  background: var(--page-bg);
+  transition: background 0.25s ease;
+}
+
+/* 환영 카드 */
+.welcome-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(108, 143, 255, 0.1) 0%, rgba(167, 139, 250, 0.07) 100%);
+  border: 1px solid rgba(108, 143, 255, 0.18);
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin-bottom: 22px;
+}
+
+.welcome-text h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 5px;
+}
+
+.welcome-text h1 strong {
+  color: #8ba4ff;
+}
+
+.welcome-text p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.welcome-badge {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #6c8fff, #a78bfa);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+  box-shadow: 0 6px 20px rgba(108, 143, 255, 0.35);
+  flex-shrink: 0;
+}
+
+/* 요약 카드 그리드 */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 빠른 메뉴 */
+.quick-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.quick-title {
   font-size: 13px;
   font-weight: 600;
-  color: #c8d0e7;
-  margin: 0 0 4px;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.quick-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  background: var(--quick-card-bg, rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--card-border);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.quick-card:hover {
+  border-color: var(--card-hover-border);
+  background: var(--card-hover-bg);
+  transform: translateY(-1px);
+}
+
+.quick-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quick-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.card-content p {
+.quick-desc {
+  display: block;
   font-size: 11px;
-  color: #4b5563;
-  margin: 0;
-  line-height: 1.4;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.card-arrow {
-  color: #374151;
+.quick-arrow {
+  color: var(--text-dim);
   flex-shrink: 0;
   transition: color 0.2s, transform 0.2s;
 }
 
-.menu-card:hover .card-arrow {
-  color: #6c8fff;
-  transform: translateX(3px);
+.quick-card:hover .quick-arrow {
+  color: var(--accent);
+  transform: translateX(2px);
 }
 
-/* ── 반응형 ── */
-@media (max-width: 768px) {
-  .top-header {
-    padding: 0 16px;
-  }
+/* ══ FOOTER ══ */
+.footer {
+  grid-area: footer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--footer-bg);
+  border-top: 1px solid var(--footer-border);
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 0 24px;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
 
-  .user-detail {
-    display: none;
-  }
+.footer-company { color: var(--text-muted); }
+.footer-sep     { color: var(--text-dim); }
+.footer-copy    { color: var(--text-dim); }
+.footer-version { color: var(--text-dim); }
 
-  .main-content {
-    padding: 16px 16px 32px;
+/* ══ 반응형 ══ */
+@media (max-width: 900px) {
+  .page-layout {
+    grid-template-columns: 180px 1fr;
   }
-
-  .welcome-banner {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-    padding: 20px;
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
+}
 
-  .menu-cards {
+@media (max-width: 640px) {
+  .page-layout {
+    grid-template-rows: 56px 1fr 40px;
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "top"
+      "content"
+      "footer";
   }
-
-  .banner-stats {
-    align-self: stretch;
-    justify-content: center;
-  }
+  .sidebar      { display: none; }
+  .top-datetime,
+  .user-detail  { display: none; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .content      { padding: 16px; }
+  .theme-switch { display: none; }
 }
 </style>

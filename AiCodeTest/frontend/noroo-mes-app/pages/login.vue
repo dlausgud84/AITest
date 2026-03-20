@@ -8,6 +8,31 @@
 
     <div class="login-card">
 
+      <!-- 테마 토글 스위치 (카드 우측 상단) -->
+      <div class="theme-row">
+        <span class="theme-label">{{ theme === 'dark' ? '블랙' : '화이트' }}</span>
+        <button
+          class="theme-switch"
+          :class="{ 'is-light': theme === 'light' }"
+          @click="toggleTheme"
+          :aria-label="theme === 'dark' ? '화이트 테마로 전환' : '블랙 테마로 전환'"
+        >
+          <span class="switch-track">
+            <span class="switch-knob">
+              <!-- 달 아이콘 (블랙 모드) -->
+              <svg v-if="theme === 'dark'" width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <path d="M13.5 10.5a6 6 0 0 1-8-8 6 6 0 1 0 8 8z" fill="currentColor"/>
+              </svg>
+              <!-- 태양 아이콘 (화이트 모드) -->
+              <svg v-else width="10" height="10" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="3" fill="currentColor"/>
+                <path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </span>
+        </button>
+      </div>
+
       <!-- 로고 영역 -->
       <div class="login-header">
         <div class="logo-icon">
@@ -31,10 +56,10 @@
                 <path d="M8 1.5A4.5 4.5 0 0 1 12.5 6c0 3.5-4.5 8.5-4.5 8.5S3.5 9.5 3.5 6A4.5 4.5 0 0 1 8 1.5z" stroke="currentColor" stroke-width="1.4"/>
                 <circle cx="8" cy="6" r="1.5" stroke="currentColor" stroke-width="1.4"/>
               </svg>
-              SITE 선택
+              SITE 선택 <span class="required-mark">*</span>
             </label>
-            <div class="select-wrapper">
-              <select v-model="siteId" id="site" required :disabled="sitesLoading" class="field-input field-select">
+            <div class="select-wrapper" :class="{ 'field-error': siteError }">
+              <select v-model="siteId" id="site" required :disabled="sitesLoading" class="field-input field-select" @change="siteError = false">
                 <option value="" disabled>
                   {{ sitesLoading ? '불러오는 중...' : 'SITE를 선택하세요' }}
                 </option>
@@ -49,6 +74,7 @@
               </span>
               <span v-if="sitesLoading" class="field-spinner" aria-hidden="true" />
             </div>
+            <span v-if="siteError" class="field-error-msg">SITE를 선택해주세요.</span>
           </div>
 
           <!-- 아이디 -->
@@ -145,13 +171,16 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthAPI, type Site } from '~/composables/useAuthAPI'
+import { useTheme } from '~/composables/useTheme'
 
 const router = useRouter()
 const { fetchSites, login } = useAuthAPI()
+const { theme, initTheme, toggleTheme } = useTheme()
 
 const sites = ref<Site[]>([])
 const sitesLoading = ref(false)
 const siteId = ref('')
+const siteError = ref(false)   // SITE 미선택 오류 상태
 const userId = ref('')
 const password = ref('')
 const showPassword = ref(false)
@@ -159,6 +188,9 @@ const loading = ref(false)
 const errorMessage = ref('')
 
 onMounted(async () => {
+  // 저장된 테마 복원 (CSR에서만 실행)
+  initTheme()
+
   sitesLoading.value = true
   try {
     sites.value = await fetchSites()
@@ -169,7 +201,7 @@ onMounted(async () => {
   }
 })
 
-// 영문자, 숫자, 특수문자(@._-)만 허용 (한글 등 비영문 자동 제거)
+// 영문자, 숫자, 특수문자(@._-)만 허용
 function filterEnglishOnly(e: Event) {
   const input = e.target as HTMLInputElement
   const filtered = input.value.replace(/[^a-zA-Z0-9@._\-]/g, '')
@@ -180,6 +212,12 @@ function filterEnglishOnly(e: Event) {
 }
 
 const handleLogin = async () => {
+  // SITE 선택 검증 - 선택하지 않으면 로그인 차단
+  if (!siteId.value) {
+    siteError.value = true
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
 
@@ -189,19 +227,19 @@ const handleLogin = async () => {
       password: password.value
     })
 
-    // localStorage 저장 (siteId는 result가 아닌 폼 선택값 사용 — 백엔드가 null 반환할 수 있음)
+    // localStorage 저장
     localStorage.setItem('authToken', result.token)
     localStorage.setItem('userId', result.userId)
     localStorage.setItem('userName', result.userName ?? result.userId)
     localStorage.setItem('siteId', siteId.value)
 
-    // 선택한 SITE 이름 저장 (메인 페이지 헤더 표시용)
+    // 선택한 SITE 이름 저장
     const selectedSite = sites.value.find(s => s.siteId === siteId.value)
     if (selectedSite) {
       localStorage.setItem('siteName', selectedSite.siteName)
     }
 
-    // 쿠키에도 저장 (SSR 미들웨어가 인증 토큰을 읽을 수 있도록)
+    // 쿠키에도 저장 (SSR 미들웨어용)
     const authCookie = useCookie('authToken', { maxAge: 60 * 60 * 8 })
     authCookie.value = result.token
 
@@ -223,10 +261,15 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(145deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  background: linear-gradient(145deg,
+    var(--login-bg-from) 0%,
+    var(--login-bg-mid)  50%,
+    var(--login-bg-to)   100%
+  );
   overflow: hidden;
   padding: 24px;
   box-sizing: border-box;
+  transition: background 0.3s ease;
 }
 
 /* 배경 장식 원 */
@@ -238,17 +281,17 @@ const handleLogin = async () => {
 }
 .bg-circle--1 {
   width: 480px; height: 480px;
-  background: radial-gradient(circle, #667eea, transparent);
+  background: radial-gradient(circle, var(--login-circle-1), transparent);
   top: -160px; left: -160px;
 }
 .bg-circle--2 {
   width: 360px; height: 360px;
-  background: radial-gradient(circle, #764ba2, transparent);
+  background: radial-gradient(circle, var(--login-circle-2), transparent);
   bottom: -100px; right: -80px;
 }
 .bg-circle--3 {
   width: 220px; height: 220px;
-  background: radial-gradient(circle, #43e97b, transparent);
+  background: radial-gradient(circle, var(--login-circle-3), transparent);
   top: 40%; left: 60%;
   opacity: 0.07;
 }
@@ -258,13 +301,84 @@ const handleLogin = async () => {
   position: relative;
   width: 100%;
   max-width: 420px;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  background: var(--login-card-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--login-card-border);
+  border-radius: 22px;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.35),
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   overflow: hidden;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ── 테마 토글 행 ── */
+.theme-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 0;
+}
+
+.theme-label {
+  font-size: 11px;
+  color: var(--login-toggle-color);
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  user-select: none;
+}
+
+/* ── 토글 스위치 ── */
+.theme-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.switch-track {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 13px;
+  background: rgba(30, 40, 90, 0.65);
+  border: 1px solid var(--login-toggle-border);
+  position: relative;
+  transition: background 0.35s ease, border-color 0.35s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.theme-switch.is-light .switch-track {
+  background: rgba(255, 185, 30, 0.18);
+  border-color: rgba(220, 155, 0, 0.4);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7aa0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.theme-switch.is-light .switch-knob {
+  left: calc(100% - 21px);
+  background: #f5a623;
 }
 
 /* ── 헤더 ── */
@@ -273,9 +387,10 @@ const handleLogin = async () => {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 40px 40px 28px;
-  background: linear-gradient(180deg, rgba(102,126,234,0.25) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 24px 40px 28px;
+  background: var(--login-header-bg);
+  border-bottom: 1px solid var(--login-header-border);
+  transition: background 0.3s ease;
 }
 
 .logo-icon {
@@ -293,16 +408,18 @@ const handleLogin = async () => {
   margin: 0;
   font-size: 28px;
   font-weight: 800;
-  color: #fff;
+  color: var(--login-title-color);
   letter-spacing: 1px;
+  transition: color 0.3s ease;
 }
 
 .logo-subtitle {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--login-subtitle-color);
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  transition: color 0.3s ease;
 }
 
 /* ── 폼 바디 ── */
@@ -322,9 +439,16 @@ const handleLogin = async () => {
   margin-bottom: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--login-label-color);
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.required-mark {
+  color: #fc8181;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .field-icon {
@@ -336,10 +460,10 @@ const handleLogin = async () => {
   width: 100%;
   height: 46px;
   padding: 0 14px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--login-input-bg);
+  border: 1px solid var(--login-input-border);
   border-radius: 10px;
-  color: #fff;
+  color: var(--login-input-color);
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
@@ -348,18 +472,31 @@ const handleLogin = async () => {
 }
 
 .field-input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--login-input-placeholder);
 }
 
 .field-input:focus {
   border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--login-input-focus-bg);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 /* 셀렉트 */
 .select-wrapper {
   position: relative;
+}
+
+.select-wrapper.field-error .field-select {
+  border-color: rgba(252, 129, 129, 0.5);
+  box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.15);
+}
+
+.field-error-msg {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: #fc8181;
+  font-weight: 500;
 }
 
 .field-select {
@@ -370,8 +507,8 @@ const handleLogin = async () => {
 }
 
 .field-select option {
-  background: #302b63;
-  color: #fff;
+  background: var(--login-select-option);
+  color: var(--login-input-color);
 }
 
 .field-select:disabled {
@@ -384,7 +521,7 @@ const handleLogin = async () => {
   right: 13px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--login-toggle-color);
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -418,7 +555,7 @@ const handleLogin = async () => {
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--login-toggle-color);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -497,13 +634,13 @@ const handleLogin = async () => {
   padding: 14px 40px 20px;
   text-align: center;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--login-footer-color);
+  border-top: 1px solid var(--login-footer-border);
+  transition: color 0.3s ease;
 }
 
 /* ── 애니메이션 ── */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
 </style>

@@ -2,18 +2,25 @@
   "permissions": {
     "allow": [
       "Read(//d/소스/바이브코딩/AITest//**)",
-      "Bash(git config:*)",
-      "Bash(cmdkey /list)",
       "Read(//d/소스/바이브코딩/AITest/**)",
-      "Bash(npx skills:*)",
-      "Bash(gh repo:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(./gradlew:*)",
+      "Bash(cmdkey /list)",
+      "Bash(xargs grep:*)",
       "Read(//c/이면형/소스/네오슬론/EDU2017/**)",
       "Bash(find C:/이면형/소스/네오슬론/EDU2017 -name *WebProxy* -o -name '*Web Reference*')",
       "Bash(find C:/이면형/소스/네오슬론/EDU2017/EDU.MESServer/Nslon.EDU.DeployWeb -name *.cs)",
-      "Bash(find C:/이면형/소스/네오슬론/EDU2017/EDU.MESServer/Nslon.EDU.MESServer.PM -name *.cs)"
+      "Bash(find C:/이면형/소스/네오슬론/EDU2017/EDU.MESServer/Nslon.EDU.MESServer.PM -name *.cs)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(ls \"d:\\\\소스\\\\바이브코딩\\\\AITest\\\\AiCodeTest\\\\.claude\"\" 2>/dev/null || echo \"not found \")"
     ],
     "additionalDirectories": [
       "d:\\소스\\바이브코딩\\AITest\\.claude"
     ]
-  }
+  },
+  "language": "korean"
 }

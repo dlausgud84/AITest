@@ -20,11 +20,16 @@ export const useSessionTimeout = () => {
   }
 
   /**
-   * 세션 만료 처리
+   * 세션 만료 처리 (login.vue에서 저장하는 키와 동일하게 제거)
    */
   const expireSession = () => {
     localStorage.removeItem('authToken')
-    localStorage.removeItem('username')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('userName')
+    localStorage.removeItem('siteId')
+    localStorage.removeItem('siteName')
+    const authCookie = useCookie('authToken')
+    authCookie.value = null
     navigateTo('/login')
   }
 

@@ -1,0 +1,5 @@
+{
+  // Nuxt 3가 생성하는 .nuxt/tsconfig.json을 상속
+  // ~ alias, auto-import 타입, Nuxt 컴포저블(useCookie, useRouter 등)을 IDE에서 인식하려면 필수
+  "extends": "./.nuxt/tsconfig.json"
+}

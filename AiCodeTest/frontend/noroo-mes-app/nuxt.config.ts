@@ -2,7 +2,13 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
-  
+
+  // 전역 CSS 등록 — 테마 CSS 변수(--page-bg, --card-bg 등)가 여기서 로드됨
+  css: [
+    '~/assets/css/main.css',    // 테마 CSS 변수 + 전역 리셋
+    '~/assets/css/common.css',  // 그리드/테이블 공통 스타일
+  ],
+
   modules: [
     // 필요한 모듈 추가
   ],

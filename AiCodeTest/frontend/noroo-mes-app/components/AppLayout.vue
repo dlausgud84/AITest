@@ -14,11 +14,15 @@
 .app-layout {
   display: flex;
   height: 100vh;
+  overflow: hidden;
+  background: var(--page-bg);
+  transition: background 0.25s ease;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
-  background: #f5f5f5;
+  background: var(--page-bg);
+  transition: background 0.25s ease;
 }
 </style>

@@ -11,7 +11,8 @@
         <result column="MENU_TYPE" property="menuType" />
         <result column="PAGE_ID" property="pageId" />
         <result column="ICON_IMAGE" property="iconImage" />
-        <result column="HELP_URL" property="menuUrl" />
+        <result column="MENU_URL" property="menuUrl" />
+        <result column="SORT_ORDER" property="sortOrder" />
         <result column="CREATOR_ID" property="creatorId" />
         <result column="CREATE_DTTM" property="createDttm" />
         <result column="MODIFIER_ID" property="modifierId" />
@@ -21,15 +22,15 @@
     <!-- 모든 메뉴 조회 -->
     <select id="selectAllMenus" resultMap="menuMap">
         SELECT MENU_ID, MENU_NAME, MENU_GROUP, MENU_TYPE, PAGE_ID, ICON_IMAGE,
-               HELP_URL, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
+               MENU_URL, SORT_ORDER, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
         FROM NW_MENUS
-        ORDER BY MENU_ID ASC
+        ORDER BY SORT_ORDER ASC, MENU_ID ASC
     </select>
 
     <!-- 메뉴 ID로 조회 -->
     <select id="selectMenuById" parameterType="String" resultMap="menuMap">
         SELECT MENU_ID, MENU_NAME, MENU_GROUP, MENU_TYPE, PAGE_ID, ICON_IMAGE,
-               HELP_URL, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
+               MENU_URL, SORT_ORDER, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
         FROM NW_MENUS
         WHERE MENU_ID = #{menuId}
     </select>
@@ -37,27 +38,27 @@
     <!-- 메뉴 그룹으로 조회 -->
     <select id="selectMenusByGroup" parameterType="String" resultMap="menuMap">
         SELECT MENU_ID, MENU_NAME, MENU_GROUP, MENU_TYPE, PAGE_ID, ICON_IMAGE,
-               HELP_URL, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
+               MENU_URL, SORT_ORDER, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
         FROM NW_MENUS
         WHERE MENU_GROUP = #{menuGroup}
-        ORDER BY MENU_ID ASC
+        ORDER BY SORT_ORDER ASC, MENU_ID ASC
     </select>
 
     <!-- 메뉴 이름으로 검색 -->
     <select id="searchMenusByName" parameterType="String" resultMap="menuMap">
         SELECT MENU_ID, MENU_NAME, MENU_GROUP, MENU_TYPE, PAGE_ID, ICON_IMAGE,
-               HELP_URL, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
+               MENU_URL, SORT_ORDER, CREATOR_ID, CREATE_DTTM, MODIFIER_ID, MODIFY_DTTM
         FROM NW_MENUS
-        WHERE MENU_NAME LIKE CONCAT('%', #{menuName}, '%')
-        ORDER BY MENU_ID ASC
+        WHERE MENU_NAME LIKE '%' + #{menuName} + '%'
+        ORDER BY SORT_ORDER ASC, MENU_ID ASC
     </select>
 
     <!-- 메뉴 생성 -->
     <insert id="insertMenu" parameterType="com.dit.menu.domain.Menu">
         INSERT INTO NW_MENUS (MENU_ID, MENU_NAME, MENU_GROUP, MENU_TYPE, PAGE_ID, ICON_IMAGE,
-                             HELP_URL, CREATOR_ID, CREATE_DTTM)
+                             MENU_URL, SORT_ORDER, CREATOR_ID, CREATE_DTTM)
         VALUES (#{menuId}, #{menuName}, #{menuGroup}, #{menuType}, #{pageId}, #{iconImage},
-                #{menuUrl}, #{creatorId}, FORMAT(GETDATE(), 'yyyyMMddHHmmss'))
+                #{menuUrl}, #{sortOrder}, #{creatorId}, FORMAT(GETDATE(), 'yyyyMMddHHmmss'))
     </insert>
 
     <!-- 메뉴 수정 -->
@@ -68,7 +69,8 @@
             MENU_TYPE = #{menuType},
             PAGE_ID = #{pageId},
             ICON_IMAGE = #{iconImage},
-            HELP_URL = #{menuUrl},
+            MENU_URL = #{menuUrl},
+            SORT_ORDER = #{sortOrder},
             MODIFIER_ID = #{modifierId},
             MODIFY_DTTM = FORMAT(GETDATE(), 'yyyyMMddHHmmss')
         WHERE MENU_ID = #{menuId}

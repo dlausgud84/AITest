@@ -37,14 +37,5 @@ watch(() => route.path, checkAuth)
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #0f1117;
-}
+/* 전역 스타일은 assets/css/main.css에서 관리 (테마 CSS 변수 포함) */
 </style>

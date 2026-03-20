@@ -73,15 +73,12 @@
       </div>
 
       <!-- 페이지네이션 -->
-      <TablePagination 
+      <TablePagination
         v-if="!loading && filteredMenus.length > 0"
-        :currentPage="currentPage"
-        :totalPages="totalPages"
-        :totalItems="filteredMenus.length"
+        :total="filteredMenus.length"
         :pageSize="pageSize"
-        @setPage="setPage"
-        @nextPage="nextPage"
-        @prevPage="prevPage"
+        :currentPage="currentPage"
+        @change-page="setPage"
       />
     </div>
 

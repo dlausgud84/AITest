@@ -1,17 +1,18 @@
-import { ref, computed } from 'vue'
+import { ref, computed, unref, type Ref } from 'vue'
 
 /**
  * 그리드 컬럼 정렬 기능을 제공하는 Composable
  * 문자열, 숫자, 날짜 자동 타입 인식 및 정렬
  */
-export const useGridSort = (items: any[]) => {
+export const useGridSort = (items: any[] | Ref<any[]>) => {
   const sortKey = ref<string | null>(null)
   const sortOrder = ref<'asc' | 'desc'>('asc')
 
   const sortedItems = computed(() => {
-    if (!sortKey.value) return items
+    const arr = unref(items)
+    if (!sortKey.value) return arr
 
-    const sorted = [...items].sort((a, b) => {
+    const sorted = [...arr].sort((a, b) => {
       const valA = a[sortKey.value!]
       const valB = b[sortKey.value!]
 

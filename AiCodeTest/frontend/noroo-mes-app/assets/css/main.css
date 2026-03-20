@@ -1,14 +1,163 @@
-/* 전역 스타일 */
+/* ════════════════════════════════════════════════════
+   전역 스타일 + 테마 CSS 변수
+   테마는 <html data-theme="dark|light"> 속성으로 분기됨
+   useTheme.ts composable에서 속성을 관리함
+════════════════════════════════════════════════════ */
 
+/* ── 공통 고정 변수 (테마에 무관) ── */
 :root {
-  --primary-color: #667eea;
-  --primary-dark: #764ba2;
-  --success-color: #4CAF50;
-  --danger-color: #f44336;
-  --warning-color: #ff9800;
-  --info-color: #2196F3;
+  --accent:        #6c8fff;
+  --accent-purple: #a78bfa;
+  --accent-login:  #667eea;
+  --accent-login2: #764ba2;
+
+  --color-blue:   #6c8fff;
+  --color-green:  #34d399;
+  --color-yellow: #fbbf24;
+  --color-purple: #a78bfa;
+  --color-cyan:   #38bdf8;
+  --color-red:    #fb7185;
+
+  --danger:  #fc8181;
+  --success: #4CAF50;
+  --warning: #ff9800;
+  --info:    #2196F3;
 }
 
+/* ════════════════════════════
+   블랙(다크) 테마 - 기본값
+════════════════════════════ */
+:root,
+[data-theme="dark"] {
+  /* 메인 페이지 배경 */
+  --page-bg:         #0d0f1a;
+  --top-bg:          #12141f;
+  --top-border:      rgba(108, 143, 255, 0.15);
+  --sidebar-bg:      #0f111c;
+  --sidebar-border:  rgba(255, 255, 255, 0.05);
+  --footer-bg:       #0a0c15;
+  --footer-border:   rgba(255, 255, 255, 0.04);
+
+  /* 카드/패널 */
+  --card-bg:         #12141f;
+  --card-border:     rgba(255, 255, 255, 0.05);
+  --card-hover-bg:   rgba(108, 143, 255, 0.04);
+  --card-hover-border: rgba(108, 143, 255, 0.28);
+
+  /* 텍스트 */
+  --text-primary:   #dde2f0;
+  --text-secondary: #8b92a8;
+  --text-muted:     #4b5568;
+  --text-dim:       #2d3150;
+
+  /* 네비게이션 */
+  --nav-hover-bg:   rgba(255, 255, 255, 0.04);
+  --nav-item-hover: rgba(108, 143, 255, 0.07);
+  --nav-badge-bg:   rgba(255, 255, 255, 0.06);
+  --nav-badge-border: rgba(255, 255, 255, 0.09);
+  --nav-badge-color: #4b5568;
+  --nav-dot-color:  #4b5568;
+  --nav-item-color: #5a6178;
+  --nav-text-color: #8b92a8;
+  --nav-text-open:  #c8d0e7;
+
+  /* 로그인 페이지 */
+  --login-bg-from:        #0f0c29;
+  --login-bg-mid:         #302b63;
+  --login-bg-to:          #24243e;
+  --login-circle-1:       #667eea;
+  --login-circle-2:       #764ba2;
+  --login-circle-3:       #43e97b;
+  --login-card-bg:        rgba(255, 255, 255, 0.06);
+  --login-card-border:    rgba(255, 255, 255, 0.12);
+  --login-header-bg:      rgba(102, 126, 234, 0.25);
+  --login-header-border:  rgba(255, 255, 255, 0.08);
+  --login-title-color:    #ffffff;
+  --login-subtitle-color: rgba(255, 255, 255, 0.5);
+  --login-label-color:    rgba(255, 255, 255, 0.65);
+  --login-input-bg:       rgba(255, 255, 255, 0.07);
+  --login-input-border:   rgba(255, 255, 255, 0.12);
+  --login-input-color:    #ffffff;
+  --login-input-placeholder: rgba(255, 255, 255, 0.3);
+  --login-input-focus-bg: rgba(102, 126, 234, 0.1);
+  --login-select-option:  #302b63;
+  --login-footer-color:   rgba(255, 255, 255, 0.25);
+  --login-footer-border:  rgba(255, 255, 255, 0.06);
+  --login-toggle-bg:      rgba(255, 255, 255, 0.06);
+  --login-toggle-border:  rgba(255, 255, 255, 0.1);
+  --login-toggle-color:   rgba(255, 255, 255, 0.4);
+  --login-toggle-active-bg: rgba(102, 126, 234, 0.2);
+  --login-toggle-active-border: rgba(102, 126, 234, 0.4);
+  --login-toggle-active-color: #667eea;
+}
+
+/* ════════════════════════════
+   화이트(라이트) 테마
+════════════════════════════ */
+[data-theme="light"] {
+  /* 메인 페이지 배경 */
+  --page-bg:         #f0f2f8;
+  --top-bg:          #ffffff;
+  --top-border:      rgba(108, 143, 255, 0.2);
+  --sidebar-bg:      #f7f9fc;
+  --sidebar-border:  rgba(0, 0, 0, 0.07);
+  --footer-bg:       #e8eaf2;
+  --footer-border:   rgba(0, 0, 0, 0.07);
+
+  /* 카드/패널 */
+  --card-bg:         #ffffff;
+  --card-border:     rgba(0, 0, 0, 0.07);
+  --card-hover-bg:   rgba(108, 143, 255, 0.05);
+  --card-hover-border: rgba(108, 143, 255, 0.35);
+
+  /* 텍스트 */
+  --text-primary:   #1a1f36;
+  --text-secondary: #4b5568;
+  --text-muted:     #9ba3bf;
+  --text-dim:       #c0c8df;
+
+  /* 네비게이션 */
+  --nav-hover-bg:   rgba(0, 0, 0, 0.04);
+  --nav-item-hover: rgba(108, 143, 255, 0.08);
+  --nav-badge-bg:   rgba(0, 0, 0, 0.05);
+  --nav-badge-border: rgba(0, 0, 0, 0.08);
+  --nav-badge-color: #9ba3bf;
+  --nav-dot-color:  #9ba3bf;
+  --nav-item-color: #6b7280;
+  --nav-text-color: #6b7280;
+  --nav-text-open:  #1a1f36;
+
+  /* 로그인 페이지 */
+  --login-bg-from:        #dce0f5;
+  --login-bg-mid:         #e8ecf7;
+  --login-bg-to:          #d8ddf0;
+  --login-circle-1:       #667eea;
+  --login-circle-2:       #764ba2;
+  --login-circle-3:       #43e97b;
+  --login-card-bg:        rgba(255, 255, 255, 0.88);
+  --login-card-border:    rgba(0, 0, 0, 0.1);
+  --login-header-bg:      rgba(102, 126, 234, 0.08);
+  --login-header-border:  rgba(0, 0, 0, 0.07);
+  --login-title-color:    #1a1f36;
+  --login-subtitle-color: rgba(0, 0, 0, 0.45);
+  --login-label-color:    #4b5568;
+  --login-input-bg:       #f4f6fb;
+  --login-input-border:   rgba(0, 0, 0, 0.12);
+  --login-input-color:    #1a1f36;
+  --login-input-placeholder: rgba(0, 0, 0, 0.3);
+  --login-input-focus-bg: rgba(102, 126, 234, 0.06);
+  --login-select-option:  #ffffff;
+  --login-footer-color:   rgba(0, 0, 0, 0.35);
+  --login-footer-border:  rgba(0, 0, 0, 0.07);
+  --login-toggle-bg:      rgba(0, 0, 0, 0.05);
+  --login-toggle-border:  rgba(0, 0, 0, 0.1);
+  --login-toggle-color:   rgba(0, 0, 0, 0.4);
+  --login-toggle-active-bg: rgba(102, 126, 234, 0.12);
+  --login-toggle-active-border: rgba(102, 126, 234, 0.35);
+  --login-toggle-active-color: #5168c8;
+}
+
+/* ── 리셋 ── */
 * {
   margin: 0;
   padding: 0;
@@ -16,13 +165,14 @@
 }
 
 html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #f5f5f5;
-  color: #333;
+  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--page-bg, #0d0f1a);
+  color: var(--text-primary, #dde2f0);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 a {
-  color: var(--primary-color);
+  color: var(--accent);
   text-decoration: none;
 }
 

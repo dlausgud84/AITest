@@ -1,3 +1,5 @@
+> **이 파일은 README.md로 통합되었습니다. `docs/README.md`를 참조하세요.**
+
 # AiCodeTest Project - README
 
 ## 프로젝트 개요
