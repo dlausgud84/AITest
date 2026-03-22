@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":modules:common"))
     implementation(project(":modules:menu"))
     implementation(project(":modules:auth"))
+    implementation(project(":modules:user"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

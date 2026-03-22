@@ -101,8 +101,8 @@
             </svg>
           </button>
 
-          <!-- 섹션 하위 메뉴 -->
-          <div class="nav-items" :class="{ visible: section.open }">
+          <!-- 섹션 하위 메뉴 : 일반(플랫) -->
+          <div v-if="!section.subgroups" class="nav-items" :class="{ visible: section.open }">
             <button
               v-for="item in section.items"
               :key="item.id"
@@ -112,6 +112,34 @@
               <span class="nav-item-dot" :class="section.colorClass" />
               <span class="nav-item-label">{{ item.title }}</span>
             </button>
+          </div>
+
+          <!-- 섹션 하위 메뉴 : 서브그룹(3단계) -->
+          <div v-else class="nav-items nav-items--tall" :class="{ visible: section.open }">
+            <div
+              v-for="sg in section.subgroups"
+              :key="sg.id"
+              class="nav-subgroup"
+            >
+              <button class="nav-subgroup-header" @click="sg.open = !sg.open">
+                <span class="nav-subgroup-title">{{ sg.title }}</span>
+                <svg class="nav-chevron nav-chevron--sm" :class="{ rotated: sg.open }" width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="nav-subitems" :class="{ visible: sg.open }">
+                <button
+                  v-for="item in sg.items"
+                  :key="item.id"
+                  class="nav-subitem"
+                  @click="navigate(item.path)"
+                >
+                  <span class="nav-subitem-dot" />
+                  {{ item.title }}
+                </button>
+                <span v-if="!sg.items || sg.items.length === 0" class="nav-empty-hint">준비 중</span>
+              </div>
+            </div>
           </div>
         </div>
       </nav>
@@ -186,7 +214,7 @@ import { ref, computed, reactive, onMounted, onUnmounted, defineComponent, h } f
 import { useTheme } from '~/composables/useTheme'
 
 const router = useRouter()
-const { theme, initTheme, toggleTheme } = useTheme()
+const { theme, toggleTheme } = useTheme()
 
 /* ── 사용자 정보 ── */
 const userName = ref('')
@@ -217,9 +245,7 @@ function updateTime() {
 }
 
 onMounted(() => {
-  // 저장된 테마 복원 (CSR에서만 실행)
-  initTheme()
-
+  // 테마 복원은 app.vue에서 전역 처리 — 여기서는 사용자 정보만 로드
   userName.value = localStorage.getItem('userName') || '사용자'
   userId.value   = localStorage.getItem('userId')   || ''
   siteName.value = localStorage.getItem('siteName') || localStorage.getItem('siteId') || ''
@@ -314,9 +340,42 @@ const menuSections = reactive([
     id: 'report', title: '리포트 / 시스템', badge: 'RPT',
     colorClass: 'color-red', open: false, icon: IconReport,
     items: [
-      { id: 'rpt-prod',  title: '생산 실적 리포트', path: '/report-production' },
-      { id: 'rpt-qual',  title: '품질 분석 리포트', path: '/report-quality' },
-      { id: 'menu-mgt',  title: '메뉴 관리',        path: '/menu-management' },
+      { id: 'rpt-prod',     title: '생산 실적 리포트', path: '/report-production' },
+      { id: 'rpt-qual',     title: '품질 분석 리포트', path: '/report-quality' },
+      { id: 'menu-mgt',     title: '메뉴 관리',        path: '/menu-management' },
+      { id: 'sys-settings', title: '시스템 설정',       path: '/settings' },
+    ]
+  },
+  {
+    id: 'settings', title: '설정', badge: 'CFG',
+    colorClass: 'color-gray', open: false, icon: IconSettings,
+    subgroups: [
+      {
+        id: 'sg-basic', title: '기본 설정', open: false,
+        items: [
+          { id: 'sg-user',       title: '사용자 설정',              path: '/settings/basic/user' },
+          { id: 'sg-perm',       title: '권한 설정',                path: '/settings/basic/permission' },
+          { id: 'sg-func',       title: '기능 설정',                path: '/settings/basic/function' },
+          { id: 'sg-fav',        title: '즐겨찾기 설정',            path: '/settings/basic/favorites' },
+          { id: 'sg-pwd',        title: 'Password Security Policy', path: '/settings/basic/password-policy' },
+          { id: 'sg-code',       title: '코드관리',                 path: '/settings/basic/code' },
+          { id: 'sg-msg',        title: '메시지 설정',              path: '/settings/basic/message' },
+          { id: 'sg-svc',        title: 'Service Member Setup',     path: '/settings/basic/service-member' },
+          { id: 'sg-board',      title: '게시판 관리',              path: '/settings/basic/board' },
+          { id: 'sg-help',       title: 'Help Setup',               path: '/settings/basic/help' },
+          { id: 'sg-dept',       title: '부서 설정',                path: '/settings/basic/department' },
+          { id: 'sg-cust',       title: '고객사 설정',              path: '/settings/basic/customer' },
+          { id: 'sg-vendor',     title: 'Vendor Setup',             path: '/settings/basic/vendor' },
+          { id: 'sg-idrule',     title: 'ID Generation Rule Setup', path: '/settings/basic/id-rule' },
+          { id: 'sg-query',      title: 'Query',                    path: '/settings/basic/query' },
+          { id: 'sg-manager',    title: 'Manager',                  path: '/settings/basic/manager' },
+          { id: 'sg-ftp',        title: 'FTP 서버 설정',            path: '/settings/basic/ftp' },
+        ]
+      },
+      { id: 'sg-process',   title: '공정 관리', open: false, items: [] },
+      { id: 'sg-document',  title: '문서 제어', open: false, items: [] },
+      { id: 'sg-equipment', title: '설비 관리', open: false, items: [] },
+      { id: 'sg-data',      title: '데이터 관리', open: false, items: [] },
     ]
   },
 ])
@@ -335,11 +394,6 @@ const quickMenus = [
     id: 'menu-mgt', title: '메뉴 관리',
     description: '메뉴 CRUD 및 권한 설정',
     path: '/menu-management', colorClass: 'color-blue', icon: IconMenu
-  },
-  {
-    id: 'settings', title: '시스템 설정',
-    description: '환경 설정 및 운영 정보',
-    path: '/settings', colorClass: 'color-purple', icon: IconSettings
   },
 ]
 </script>
@@ -635,6 +689,98 @@ const quickMenus = [
   max-height: 300px;
 }
 
+/* 서브그룹이 있는 섹션은 max-height를 크게 확보 */
+.nav-items--tall.visible {
+  max-height: 1200px;
+}
+
+/* ── 서브그룹 헤더 ── */
+.nav-subgroup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 16px 7px 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--nav-item-color);
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: color 0.2s, background 0.2s;
+  text-align: left;
+}
+
+.nav-subgroup-header:hover {
+  color: var(--nav-text-open);
+  background: var(--nav-item-hover);
+}
+
+.nav-subgroup-title {
+  flex: 1;
+}
+
+.nav-chevron--sm {
+  flex-shrink: 0;
+  color: var(--nav-dot-color);
+  transition: transform 0.2s ease;
+}
+
+/* ── 서브그룹 아이템 영역 ── */
+.nav-subitems {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.nav-subitems.visible {
+  max-height: 800px;
+}
+
+/* ── 서브그룹 리프 아이템 ── */
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 16px 5px 38px;
+  background: none;
+  border: none;
+  color: var(--nav-item-color);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  text-align: left;
+  font-family: inherit;
+  opacity: 0.85;
+}
+
+.nav-subitem:hover {
+  color: var(--nav-text-open);
+  background: var(--nav-item-hover);
+  opacity: 1;
+}
+
+.nav-subitem-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+/* 준비 중 힌트 */
+.nav-empty-hint {
+  display: block;
+  padding: 5px 16px 5px 38px;
+  font-size: 11px;
+  color: var(--nav-item-color);
+  opacity: 0.4;
+  font-style: italic;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -679,6 +825,7 @@ const quickMenus = [
 .color-purple { background: rgba(167, 139, 250, 0.14); color: #a78bfa; }
 .color-cyan   { background: rgba(56,  189, 248, 0.14); color: #38bdf8; }
 .color-red    { background: rgba(251, 113, 133, 0.14); color: #fb7185; }
+.color-gray   { background: rgba(140, 140, 140, 0.14); color: #8c8c8c; }
 
 .nav-item-dot.color-blue   { background: #6c8fff; }
 .nav-item-dot.color-green  { background: #34d399; }

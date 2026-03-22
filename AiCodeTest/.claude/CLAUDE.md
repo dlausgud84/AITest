@@ -5,24 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 이 프로젝트에서 코드 작업 시 아래 스킬을 상황에 맞게 반드시 적용한다.
 
-| 상황 | 적용 스킬 | 설명 |
-|------|-----------|------|
-| `.vue` 파일 작성/수정 시 | `vue-best-practices` | Vue 3 공식 스타일 가이드, `<script setup>` 패턴 필수 적용 |
-| Nuxt 파일 작업 시 (pages/, composables/, plugins/, middleware/, nuxt.config.ts) | `nuxt` | SSR/CSR 구분, auto-imports, 하이브리드 렌더링 이슈 확인 |
-| Vue Composition API 작성 시 | `vue` | defineProps/defineEmits, reactivity, Teleport/Suspense 등 |
-| 라우팅/미들웨어 작업 시 | `vue-router-best-practices` | navigation guards, route params, auth middleware |
-| composable 신규 작성 전 | `vueuse` | VueUse에 이미 구현된 패턴인지 먼저 확인 (중복 구현 방지) |
-| 기존 composable 개선 시 | `vueuse-functions` | VueUse 활용한 간결한 패턴으로 개선 |
-| 테스트 코드 작성 시 | `vitest` + `vue-testing-best-practices` | Vitest + Vue Test Utils 패턴 |
-| UI/UX 검토 요청 시 | `web-design-guidelines` | 접근성, 반응형, UX 가이드라인 준수 확인 |
+| 상황 | 적용 스킬 | 참조 파일 |
+|------|-----------|----------|
+| `.vue` 파일 작성/수정 시 | `vue-best-practices` | `frontend/rules/Implementation.md` |
+| Nuxt 파일 작업 시 (pages/, composables/, plugins/, middleware/, nuxt.config.ts) | `nuxt` | `frontend/rules/Implementation.md` |
+| Vue Composition API 작성 시 | `vue` | `frontend/rules/Implementation.md` |
+| 라우팅/미들웨어 작업 시 | `vue-router-best-practices` | `frontend/rules/Implementation.md` |
+| composable 신규 작성 전 | `vueuse` | `frontend/rules/Implementation.md` |
+| 기존 composable 개선 시 | `vueuse-functions` | `frontend/rules/Implementation.md` |
+| 테스트 코드 작성 시 | `vitest` + `vue-testing-best-practices` | `frontend/rules/TestCodeGeneration.md` |
+| UI/UX 검토 요청 시 | `web-design-guidelines` | `frontend/rules/Plan.md` |
 
-### 적용 제외 스킬 (현재 미사용)
-
-아래 스킬은 이 프로젝트 스택과 무관하므로 적용하지 않는다:
-- `nuxt-ui`, `nuxt-content`, `nuxt-seo`, `nuxt-better-auth`, `nuxthub`, `nuxt-studio`, `nuxt-modules`
-- `reka-ui`, `unocss`, `tresjs`, `motion`
-- `pinia` (현재 상태 관리는 composable 패턴 사용)
-- `ts-library`, `tsdown`, `turborepo`, `pnpm`, `antfu`
+**적용 제외 스킬**: nuxt-ui, nuxt-content, reka-ui, unocss, pinia (composable 패턴 사용), ts-library, turborepo, pnpm 등
 
 ---
 
@@ -32,26 +26,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 폴더 | 용도 | 학습 우선순위 |
 |------|------|--------------|
-| `.claude/rules/` | 개발 단계별 세부 규칙 (조사/계획/구현/검증) | **필수 · 최우선** |
+| `.claude/backend/rules/` | 개발 단계별 세부 규칙 (조사/계획/테스트/구현/검증/최적화) | **필수 · 최우선** |
+| `.claude/frontend/rules/` | 개발 단계별 세부 규칙 (조사/계획/테스트/구현/검증/최적화) | **필수 · 최우선** |
 | `.claude/batch/` | 실행 명령어, 스크립트 가이드 | **필수** |
-| `.claude/frontend/` | 프론트엔드 공통 컴포넌트 가이드 | 프론트 작업 시 필수 |
-| `.claude/backend/` | 백엔드 아키텍처·패턴 가이드 | 백엔드 작업 시 필수 |
+| `.claude/frontend/common/` | 공통 컴포넌트 상세 가이드 (버튼/그리드/폼/팝업) | 프론트 작업 시 필수 |
 
 > **학습 원칙**: 파일을 "읽은 척"하지 않는다. 각 파일의 규칙이 현재 작업에 어떻게 적용되는지 판단하여 실제로 반영한다.
 
 ---
 
-## 개발 단계별 Rules
+## 개발 단계별 frontend Rules
 
-모든 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 `.claude/rules/` 폴더를 참조한다.
+frontend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 `.claude/frontend/rules/` 폴더를 참조한다.
 
 | 단계 | 파일 | 내용 |
 |---|---|---|
-| 1. 조사 | `rules/Research.md` | 요구사항 파악, 기존 코드 분석, 영향 범위 확인 |
-| 2. 계획 | `rules/Plan.md` | 아키텍처/DB/API 설계, 작업 순서 및 변경 파일 목록 수립 |
-| 3. 테스트 작성 | `rules/TestCodeGeneration.md` | 구현 전/중 테스트 코드 작성 (JUnit5, Vitest) |
-| 4. 구현 | `rules/Implementation.md` | Domain → Mapper → Service → Controller → 프론트엔드 순 구현 |
-| 5. 검증 | `rules/Verification.md` | 빌드/기능/회귀 테스트, 코드 규칙 체크리스트, 문서 업데이트 |
+| 1. 조사 | `frontend/rules/Research.md` | 요구사항 파악, API 명서 분석, 기존 컴포넌트 확인 |
+| 2. 계획 | `frontend/rules/Plan.md` | Nuxt 라우팅 설계, 컴포넌트 분리, 상태 관리 기획 |
+| 3. 테스트 작성 | `frontend/rules/TestCodeGeneration.md` | Vitest + Vue Test Utils 테스트 구현 |
+| 4. 구현 | `frontend/rules/Implementation.md` | TypeScript 타입, Composables, UI 마크업 |
+| 5. 검증 | `frontend/rules/Verification.md` | 콘솔 에러/Lint 점검, 빌드 & 미리보기 |
+| 6. 최적화 | `frontend/rules/Optimization.md` | 번들 최적화, Lazy 로딩, 웹 접근성 |
+
+## 개발 단계별 backend Rules
+
+backend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 `.claude/backend/rules/` 폴더를 참조한다.
+
+| 단계 | 파일 | 내용 |
+|---|---|---|
+| 1. 조사 | `backend/rules/Research.md` | 요구사항 파악, DB 구조 분석, 영향도 검토 |
+| 2. 계획 | `backend/rules/Plan.md` | API 설계, DB DDL, 아키텍처 설계 |
+| 3. 테스트 작성 | `backend/rules/TestCodeGeneration.md` | JUnit5 + Mockito 테스트 구현 |
+| 4. 구현 | `backend/rules/Implementation.md` | Domain → Mapper → Service → Controller 순 구현 |
+| 5. 검증 | `backend/rules/Verification.md` | API 테스트, 빌드 검증, 문서 업데이트 |
+| 6. 최적화 | `backend/rules/Optimization.md` | SQL 튜닝, 인덱싱, 보안 & 로깅 |
+
 
 ## 기본 규칙
 **단순한 코드 생성기가 아닌, 현업에서 함께 문제를 해결하는 전문 개발 파트너로서 동작한다.**
@@ -105,103 +114,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 코드 작성 규칙
 
-- 백엔드 패키지 네이밍: `com.dit.<domain>.<layer>` (controller / service / persistence.mapper / domain / dto)
-- MyBatis Mapper는 XML 파일 기반으로 작성 (`resources/mappers/**/*.xml`)
-- 프론트엔드 composable은 `use` 접두어 사용 (예: `useMenuAPI`, `usePagination`)
-- Nuxt 페이지는 `pages/` 디렉토리, 공통 컴포넌트는 `components/` 디렉토리에 위치
-- **공통 모듈 우선 원칙**: 2개 이상의 도메인/페이지에서 반복되는 로직은 반드시 공통 모듈로 분리하여 재사용
-  - 백엔드: `backend/modules/common/` 하위에 공통 유틸/예외/상수 배치
-  - 프론트엔드: `composables/`(로직), `components/`(UI)로 분리하여 공통화
+> 상세 규칙은 각 개발 단계별 파일을 참조하세요.
 
-## 계층형 아키텍처 규칙
-
-- **Controller**: API/웹 요청 처리, DTO 변환만 담당. 비즈니스 로직 금지
-- **Service**: 트랜잭션 경계, 비즈니스 규칙/검증, 집계/계산 담당
-- **Mapper**: DB 접근 전용 (MyBatis Mapper + XML)
-- 멀티모듈 구조: `backend/apps/` (실행 앱), `backend/modules/` (도메인 모듈)
-
-### 백엔드 공통 모듈 규칙
-
-- 공통 예외 클래스(`BusinessException`, 에러코드 enum)는 `modules/common/` 에 위치
-- 공통 응답 래퍼(`ApiResponse<T>`) 사용 — 성공/실패 포맷 통일
-- 도메인 간 공유되는 유틸, 상수, 검증 로직은 도메인 모듈이 아닌 `common` 모듈에 작성
-- 새로운 도메인 모듈 추가 시 `backend/modules/<domain>/` 단위로 생성
-
-## DB 네이밍 규칙
-
-- **DB**: Microsoft SQL Server (MSSQL) 사용
-- **테이블 접두어**: `TBL_` 사용 (예: `TBL_ORDER_INFO`, `TBL_ORDER_ITEM`)
-- **컬럼 네이밍**: 소문자 스네이크케이스 (예: `order_id`, `user_id`, `created_at`)
-- **타임스탬프 컬럼**: `CREATE_DTTM`, `MODIFY_DTTM` (형식: `yyyyMMddHHmmss`)
-- **사용자 추적 컬럼**: `CREATOR_ID` (등록자, 수정 불가), `MODIFIER_ID` (최종 수정자)
-- 도메인 모델은 카멜케이스 사용, MyBatis `map-underscore-to-camel-case: true` 설정으로 자동 매핑
-
-## 에러 처리 패턴
-
-- 서비스 레이어에서 `BusinessException` 사용
-- 글로벌 예외 처리: `@ControllerAdvice` 적용
-- CORS 설정: `CorsConfig.java`에서 `/api/**` 경로에 허용 오리진 명시
-- 프론트엔드: composable 내에서 `try/catch` 후 사용자에게 메시지 표시
-- DB 연결 시 `trustServerCertificate=true` 필수 (자체 서명 인증서 허용)
+| 영역 | 참조 파일 | 내용 |
+|------|----------|------|
+| 백엔드 패키지 + 아키텍처 | `backend/rules/Plan.md` | 패키지 네이밍, 계층형 구조, 공통 모듈, DB 네이밍 |
+| 백엔드 에러 처리 | `backend/rules/Implementation.md` | BusinessException, Global Handler, ApiResponse |
+| 프론트엔드 컴포넌트 설계 | `frontend/rules/Plan.md` | 컴포넌트 네이밍, 공통 컴포넌트 가이드 |
+| 프론트엔드 코드 작성 | `frontend/rules/Implementation.md` | Vue 3 Composition API, Composables, 에러 처리, 스킬 |
 
 ## 프론트엔드 공통 컴포넌트 가이드
 
-프론트엔드 개발 시 `.claude/frontend/` 폴더의 가이드를 반드시 참조하여 구현한다.
+프론트엔드 개발 시 아래 가이드 파일과 `frontend/rules/Plan.md`를 반드시 참조하여 구현합니다.
 
 | 가이드 파일 | 대상 컴포넌트 | 주요 내용 |
 |---|---|---|
-| `frontend/common-button-guide.md` | `BaseButton.vue` | 버튼 타입 5종 (search/save/delete/reset/custom), Props, SVG 아이콘, 사용 예시 |
-| `frontend/common-grid-guide.md` | `BaseGrid.vue` | 페이지네이션/내부스크롤/무한스크롤 3가지 모드, 컬럼 리사이즈, 서버사이드 연동 |
-| `frontend/common-components-guide.md` | `BaseTextBox`, `BaseToggleGroup`, `BaseComboBox`, `BaseSelectBox` | 폼 컴포넌트 Props, 특수문자 차단, 다중 선택, 첫 번째 값 자동 선택 |
-
-### 공통 컴포넌트 파일 위치
-
-```
-components/                         ← 현재 구현 완료
-├── AppLayout.vue           ← 전체 레이아웃 래퍼
-├── Sidebar.vue             ← 좌측 네비게이션
-├── PageHeader.vue          ← 페이지 상단 타이틀
-└── TablePagination.vue     ← 페이지네이션 UI
-
-components/base/                    ← 향후 확장 예정 (공통 컴포넌트 가이드 기준)
-├── BaseButton.vue          ← 버튼 (common-button-guide.md)
-├── BaseGrid.vue            ← 그리드 (common-grid-guide.md)
-├── BaseTextBox.vue         ← 텍스트박스 (common-components-guide.md)
-├── BaseToggleGroup.vue     ← 토글 그룹 (common-components-guide.md)
-├── BaseComboBox.vue        ← 콤보박스 (common-components-guide.md)
-└── BaseSelectBox.vue       ← 셀렉트박스 (common-components-guide.md)
-
-types/
-├── grid.ts                 ← GridColumn, GridSort, GridPageChange
-└── form.ts                 ← FormOption, FormSize
-
-composables/
-├── useColumnResize.ts      ← 컬럼 너비 드래그 조절
-├── useInfiniteScroll.ts    ← 무한 스크롤 (IntersectionObserver)
-└── useGridPagination.ts    ← 그리드 내장 페이지네이션
-```
-
-### 컴포넌트 사용 원칙
-
-- 컴포넌트명은 반드시 **PascalCase + 두 단어 이상** (`BaseButton` ✅ / `Button` ❌)
-- 공통 컴포넌트는 `Base` 접두사 사용
-- Boolean Props는 `is` / `has` / `can` 접두사 사용 (`isDisabled`, `isLoading`, `hasPagination`)
-- Props는 camelCase로 정의, 템플릿에서는 kebab-case로 사용
-- `<script setup>` + Composition API 사용
-- Emit은 `defineEmits`로 명시적 선언
-
-## 프론트엔드 공통 모듈 규칙
-
-- **그리드 페이지 필수 패턴**: 필터링 → 정렬 → 페이지네이션 순서로 적용
-  1. `usePagination.ts`: 페이지 단위 데이터 분할
-  2. `useGridSort.ts`: 컬럼 오름차순/내림차순 정렬
-  3. `useResponsivePageSize.ts`: 화면 크기별 자동 페이지 크기 조정
-- **테이블 HTML 구조**: 테이블 감싸는 div에 `class="table-container"` 적용
-- **액션 컬럼**: 수정/삭제 버튼은 항상 테이블 마지막 컬럼에 배치
-- **정렬 가능한 헤더**: `class="sortable"` 추가
-- `TablePagination.vue` 컴포넌트로 페이지네이션 UI 통일
-- 검색 입력 시 디바운스 적용 권장
-- 대용량 데이터는 백엔드 페이지네이션 사용
+| [`frontend/common/common-button-guide.md`](frontend/common/common-button-guide.md) | `BaseButton.vue` | 9가지 btnType, Props, SVG 아이콘 |
+| [`frontend/common/common-grid-guide.md`](frontend/common/common-grid-guide.md) | `BaseGrid.vue` | 3가지 모드 (페이지네이션/내부스크롤/무한스크롤), 컬럼 리사이즈 |
+| [`frontend/common/common-components-guide.md`](frontend/common/common-components-guide.md) | Form 컴포넌트 | TextBox, ToggleGroup, ComboBox, SelectBox |
+| [`frontend/common/common-popup-guide.md`](frontend/common/common-popup-guide.md) | `BaseModal.vue` | 4가지 모드, 5가지 크기, alert 타입 |
 
 ## 포트 구성
 
@@ -282,11 +213,15 @@ frontend/noroo-mes-app/
 
 ## 인증 및 세션 규칙
 
+> 상세 구현 규칙은 `frontend/rules/Implementation.md` 참조
+
 - 전역 인증: `middleware/auth.global.ts`에서 모든 페이지 접근 시 인증 여부 검사
 - 세션 타임아웃: `plugins/sessionTimeout.client.ts` + `composables/useSessionTimeout.ts` 조합으로 관리
 - 로그인 페이지: `pages/login.vue` (인증 미들웨어 예외 처리 필요)
 
 ## CORS 설정 위치
+
+> 상세 규칙은 `backend/rules/Implementation.md` 참조
 
 - 백엔드 CORS 설정 파일: `backend/src/main/java/com/dit/config/CorsConfig.java`
 - 허용 경로: `/api/**`, 허용 오리진: `http://localhost:3000`

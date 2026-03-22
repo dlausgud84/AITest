@@ -1,6 +1,7 @@
 # 공통 폼 컴포넌트 가이드
 
 > Vue.js 공식 스타일 가이드 (https://vuejs.org/style-guide/) 기반으로 작성
+> Vue 3.4+ / Vue 3.5+ / Nuxt 3 auto-imports 트렌드 적용
 > 버튼 컴포넌트는 `common-button-guide.md` 참조
 
 ---
@@ -101,13 +102,14 @@ allowSpecialChars=false 적용 시:
       <input
         :id="inputId"
         :type="type"
-        :value="modelValue"
+        :value="model"
         :placeholder="placeholder"
         :disabled="isDisabled"
         :readonly="isReadonly"
         :maxlength="maxLength"
         :aria-label="label ?? placeholder"
         :aria-disabled="isDisabled"
+        :aria-describedby="!allowSpecialChars && hasSpecialCharWarning ? `${inputId}-warn` : undefined"
         :class="inputClasses"
         v-bind="$attrs"
         @input="handleInput"
@@ -117,12 +119,17 @@ allowSpecialChars=false 적용 시:
 
       <!-- 글자 수 카운터 (maxLength 설정 시) -->
       <span v-if="maxLength" class="textbox__counter" aria-live="polite">
-        {{ modelValue.length }} / {{ maxLength }}
+        {{ model.length }} / {{ maxLength }}
       </span>
     </div>
 
     <!-- 특수문자 차단 안내 메시지 -->
-    <p v-if="!allowSpecialChars && hasSpecialCharWarning" class="textbox__warning" role="alert">
+    <p
+      v-if="!allowSpecialChars && hasSpecialCharWarning"
+      :id="`${inputId}-warn`"
+      class="textbox__warning"
+      role="alert"
+    >
       특수문자는 입력할 수 없습니다
     </p>
 
@@ -130,78 +137,61 @@ allowSpecialChars=false 적용 시:
 </template>
 
 <script setup lang="ts">
-// 스타일 가이드: <script setup> 사용
-import { ref, computed } from 'vue'
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseTextBox' })
+
 import type { FormSize } from '~/types/form'
 
 // 특수문자 판별 정규식 — 영문·숫자·한글·공백 이외 모두 차단
 const SPECIAL_CHAR_REGEX = /[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s]/g
 
-// 고유 ID 생성 (label의 for와 input의 id 연결)
-let idCounter = 0
-const inputId = `textbox-${++idCounter}`
+// ─── Props (TypeScript 유니온 타입 방식 — Vue 3.4+) ───────────────────────
+// ❌ 구식: modelValue prop + emit('update:modelValue') 분리 방식
+// ✅ 현대: defineModel() 로 양방향 바인딩 단순화 (Vue 3.4+)
+interface Props {
+  type?:              'text' | 'password' | 'email' | 'number'
+  placeholder?:       string
+  label?:             string
+  size?:              FormSize
+  isDisabled?:        boolean
+  isReadonly?:        boolean
+  allowSpecialChars?: boolean
+  maxLength?:         number
+  block?:             boolean
+}
 
-// ─── Props ────────────────────────────────────────────────────────────────
-// 스타일 가이드: Props는 타입과 validator를 상세하게 정의
-const props = defineProps({
-  modelValue: {
-    type: String,
-    default: ''
-  },
-  type: {
-    type: String,
-    default: 'text',
-    validator: (v: string) => ['text', 'password', 'email', 'number'].includes(v)
-  },
-  placeholder: {
-    type: String,
-    default: ''
-  },
-  label: {
-    type: String,
-    default: undefined
-  },
-  size: {
-    type: String as () => FormSize,
-    default: 'md',
-    validator: (v: string) => ['sm', 'md', 'lg'].includes(v)
-  },
-  isDisabled: {
-    type: Boolean,
-    default: false
-  },
-  isReadonly: {
-    type: Boolean,
-    default: false
-  },
-  // false 시 특수문자 입력 차단
-  allowSpecialChars: {
-    type: Boolean,
-    default: true
-  },
-  maxLength: {
-    type: Number,
-    default: undefined
-  },
-  block: {
-    type: Boolean,
-    default: false
-  }
+const props = withDefaults(defineProps<Props>(), {
+  type:              'text',
+  placeholder:       '',
+  size:              'md',
+  isDisabled:        false,
+  isReadonly:        false,
+  allowSpecialChars: true,
 })
 
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+// ❌ 구식: const props = defineProps({ modelValue: ... }) + emit('update:modelValue', val)
+// ✅ 현대: defineModel()이 modelValue prop + update:modelValue emit을 자동 처리
+const model = defineModel<string>({ default: '' })
+
 // ─── Emits ────────────────────────────────────────────────────────────────
-// 스타일 가이드: Emit은 명시적으로 선언
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  'blur': [event: FocusEvent]
+  'blur':  [event: FocusEvent]
   'focus': [event: FocusEvent]
 }>()
 
+// ─── useId (Vue 3.5+) — SSR 안전한 고유 ID ───────────────────────────────
+// ❌ 구식: let idCounter = 0; const inputId = `textbox-${++idCounter}`
+// ✅ 현대: useId()는 SSR 하이드레이션 충돌 없이 안전하게 고유 ID 생성
+const inputId = useId()
+
 // ─── State ────────────────────────────────────────────────────────────────
+// Nuxt auto-imports: ref는 import 없이 사용 가능
 // 특수문자 차단 경고 표시 여부
 const hasSpecialCharWarning = ref(false)
 
 // ─── Computed ─────────────────────────────────────────────────────────────
+// Nuxt auto-imports: computed는 import 없이 사용 가능
 // 스타일 가이드: 복잡한 표현식은 computed로 분리
 
 const wrapperClasses = computed(() => [
@@ -213,8 +203,8 @@ const wrapperClasses = computed(() => [
 const inputClasses = computed(() => [
   'textbox__input',
   {
-    'textbox__input--disabled': props.isDisabled,
-    'textbox__input--readonly': props.isReadonly,
+    'textbox__input--disabled':    props.isDisabled,
+    'textbox__input--readonly':    props.isReadonly,
     'textbox__input--has-counter': !!props.maxLength
   }
 ])
@@ -234,11 +224,20 @@ const handleInput = (event: Event) => {
     input.value = value
   }
 
-  emit('update:modelValue', value)
+  // defineModel 사용: model.value에 직접 할당
+  model.value = value
 }
 </script>
 
 <style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+  --color-error:         #ff4d4f;
+}
+
 /* ── Wrapper ── */
 .textbox { display: inline-flex; flex-direction: column; gap: 4px; }
 .textbox--block { display: flex; width: 100%; }
@@ -261,7 +260,7 @@ const handleInput = (event: Event) => {
 /* ── 인풋 ── */
 .textbox__input {
   width: 100%;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   color: #333;
   background: #fff;
@@ -271,8 +270,8 @@ const handleInput = (event: Event) => {
 }
 
 .textbox__input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
 /* 크기 */
@@ -300,7 +299,7 @@ const handleInput = (event: Event) => {
 /* ── 경고 메시지 ── */
 .textbox__warning {
   font-size: 12px;
-  color: #ff4d4f;
+  color: var(--color-error);
   margin: 0;
 }
 </style>
@@ -402,50 +401,35 @@ isMultiple=true:
 </template>
 
 <script setup lang="ts">
-// 스타일 가이드: <script setup> 사용
-import { computed } from 'vue'
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseToggleGroup' })
+
 import type { FormOption, FormSize } from '~/types/form'
 
-// ─── Props ────────────────────────────────────────────────────────────────
-const props = defineProps({
-  modelValue: {
-    type: [String, Array] as unknown as () => string | string[],
-    default: ''
-  },
-  // options 미설정 + count 설정 시 자동으로 1~N 토글 생성
-  options: {
-    type: Array as () => FormOption[],
-    default: undefined
-  },
-  count: {
-    type: Number,
-    default: undefined
-  },
-  isMultiple: {
-    type: Boolean,
-    default: false
-  },
-  size: {
-    type: String as () => FormSize,
-    default: 'md',
-    validator: (v: string) => ['sm', 'md', 'lg'].includes(v)
-  },
-  isDisabled: {
-    type: Boolean,
-    default: false
-  },
-  ariaLabel: {
-    type: String,
-    default: '토글 그룹'
-  }
+// ─── Props (TypeScript 유니온 타입 방식 — Vue 3.4+) ───────────────────────
+interface Props {
+  options?:   FormOption[]
+  count?:     number
+  isMultiple?: boolean
+  size?:      FormSize
+  isDisabled?: boolean
+  ariaLabel?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isMultiple: false,
+  size:       'md',
+  isDisabled: false,
+  ariaLabel:  '토글 그룹',
 })
 
-// ─── Emits ────────────────────────────────────────────────────────────────
-const emit = defineEmits<{
-  'update:modelValue': [value: string | string[]]
-}>()
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+// ❌ 구식: modelValue prop + emit('update:modelValue')
+// ✅ 현대: defineModel로 단순화
+const model = defineModel<string | string[]>({ default: '' })
 
 // ─── Computed ─────────────────────────────────────────────────────────────
+// Nuxt auto-imports: computed는 import 없이 사용 가능
 // 스타일 가이드: 복잡한 표현식은 computed로 분리
 
 /**
@@ -476,9 +460,9 @@ const groupClasses = computed(() => [
 /** 해당 value가 현재 선택 상태인지 확인 */
 const isSelected = (value: string | number): boolean => {
   if (props.isMultiple) {
-    return Array.isArray(props.modelValue) && props.modelValue.includes(String(value))
+    return Array.isArray(model.value) && model.value.includes(String(value))
   }
-  return props.modelValue === String(value)
+  return model.value === String(value)
 }
 
 const getToggleClasses = (item: FormOption) => [
@@ -495,27 +479,36 @@ const handleToggle = (value: string | number) => {
   const strValue = String(value)
 
   if (props.isMultiple) {
-    const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const current = Array.isArray(model.value) ? [...model.value] : []
     const idx = current.indexOf(strValue)
     if (idx >= 0) {
       current.splice(idx, 1)  // 이미 선택됨 → 제거
     } else {
       current.push(strValue)  // 미선택 → 추가
     }
-    emit('update:modelValue', current)
+    // defineModel: model.value에 직접 할당
+    model.value = current
   } else {
-    emit('update:modelValue', strValue)
+    model.value = strValue
   }
 }
 </script>
 
 <style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-dark:  #5568d3;
+  --color-primary-hover: #f0f3ff;
+  --color-border:        #d9d9d9;
+}
+
 /* ── 그룹 컨테이너 ── */
 .toggle-group {
   display: inline-flex;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--color-border);
 }
 
 /* ── 토글 버튼 공통 ── */
@@ -524,7 +517,7 @@ const handleToggle = (value: string | number) => {
   align-items: center;
   justify-content: center;
   border: none;
-  border-right: 1px solid #d9d9d9;
+  border-right: 1px solid var(--color-border);
   background: #fff;
   color: #555;
   cursor: pointer;
@@ -539,23 +532,23 @@ const handleToggle = (value: string | number) => {
 }
 
 .toggle-group__btn:hover:not(:disabled) {
-  background: #f0f3ff;
-  color: #667eea;
+  background: var(--color-primary-hover);
+  color: var(--color-primary);
 }
 
 .toggle-group__btn:focus-visible {
-  box-shadow: inset 0 0 0 2px #667eea;
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
 /* 선택된 상태 */
 .toggle-group__btn--active {
-  background: #667eea;
+  background: var(--color-primary);
   color: #fff;
   font-weight: 600;
 }
 
 .toggle-group__btn--active:hover:not(:disabled) {
-  background: #5568d3;
+  background: var(--color-primary-dark);
   color: #fff;
 }
 
@@ -709,12 +702,12 @@ isMultiple=true:
       :aria-multiselectable="isMultiple"
     >
       <!-- 로딩 -->
-      <li v-if="isLoading" class="combo__option combo__option--loading">
+      <li v-if="isLoading" class="combo__option combo__option--loading" role="status">
         <span class="combo__spinner" />불러오는 중...
       </li>
 
       <!-- 검색 결과 없음 -->
-      <li v-else-if="filteredOptions.length === 0" class="combo__option combo__option--empty">
+      <li v-else-if="filteredOptions.length === 0" class="combo__option combo__option--empty" aria-live="polite">
         {{ noResultMessage }}
       </li>
 
@@ -726,9 +719,9 @@ isMultiple=true:
         :key="option.value"
         class="combo__option"
         :class="{
-          'combo__option--selected':  isOptionSelected(option.value),
-          'combo__option--highlighted': index === highlightedIndex,
-          'combo__option--disabled': option.isDisabled
+          'combo__option--selected':     isOptionSelected(option.value),
+          'combo__option--highlighted':  index === highlightedIndex,
+          'combo__option--disabled':     option.isDisabled
         }"
         role="option"
         :aria-selected="isOptionSelected(option.value)"
@@ -753,60 +746,58 @@ isMultiple=true:
 </template>
 
 <script setup lang="ts">
-// 스타일 가이드: <script setup> 사용
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseComboBox' })
+
 import type { FormOption, FormSize } from '~/types/form'
 
-// ─── Props ────────────────────────────────────────────────────────────────
-const props = defineProps({
-  modelValue: {
-    type: [String, Array] as unknown as () => string | string[],
-    default: ''
-  },
-  options: {
-    type: Array as () => FormOption[],
-    default: () => []
-  },
-  isMultiple: {
-    type: Boolean,
-    default: false
-  },
-  placeholder: {
-    type: String,
-    default: '검색...'
-  },
-  isDisabled: {
-    type: Boolean,
-    default: false
-  },
-  isLoading: {
-    type: Boolean,
-    default: false
-  },
-  noResultMessage: {
-    type: String,
-    default: '검색 결과 없음'
-  },
-  size: {
-    type: String as () => FormSize,
-    default: 'md',
-    validator: (v: string) => ['sm', 'md', 'lg'].includes(v)
-  }
+// ─── Props (TypeScript 유니온 타입 방식 — Vue 3.4+) ───────────────────────
+interface Props {
+  options?:         FormOption[]
+  isMultiple?:      boolean
+  placeholder?:     string
+  isDisabled?:      boolean
+  isLoading?:       boolean
+  noResultMessage?: string
+  size?:            FormSize
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  options:         () => [],
+  isMultiple:      false,
+  placeholder:     '검색...',
+  isDisabled:      false,
+  isLoading:       false,
+  noResultMessage: '검색 결과 없음',
+  size:            'md',
 })
 
-// ─── Emits ────────────────────────────────────────────────────────────────
-const emit = defineEmits<{
-  'update:modelValue': [value: string | string[]]
-}>()
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+// ❌ 구식: modelValue prop + emit('update:modelValue')
+// ✅ 현대: defineModel로 양방향 바인딩 단순화
+const model = defineModel<string | string[]>({ default: '' })
 
-// ─── Refs ─────────────────────────────────────────────────────────────────
-const comboRef = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
-const searchQuery = ref('')
-const isOpen = ref(false)
+// ─── useTemplateRef (Vue 3.5+) ────────────────────────────────────────────
+// ❌ 구식: const comboRef = ref<HTMLElement | null>(null)  + template ref="comboRef"
+// ✅ 현대: useTemplateRef()는 타입 안전하고 명시적
+const comboRef  = useTemplateRef<HTMLElement>('comboRef')
+const inputRef  = useTemplateRef<HTMLInputElement>('inputRef')
+
+// ─── State ────────────────────────────────────────────────────────────────
+// Nuxt auto-imports: ref는 import 없이 사용 가능
+const searchQuery      = ref('')
+const isOpen           = ref(false)
 const highlightedIndex = ref(-1)
 
+// ─── onClickOutside (VueUse) ──────────────────────────────────────────────
+// ❌ 구식:
+//   onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
+//   onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
+// ✅ 현대: VueUse onClickOutside (Nuxt auto-imports로 import 불필요)
+onClickOutside(comboRef, closeDropdown)
+
 // ─── Computed ─────────────────────────────────────────────────────────────
+// Nuxt auto-imports: computed는 import 없이 사용 가능
 
 /** 검색어로 필터링된 옵션 목록 */
 const filteredOptions = computed(() =>
@@ -817,7 +808,7 @@ const filteredOptions = computed(() =>
 
 /** 다중 선택 chip 목록 */
 const selectedChips = computed(() =>
-  props.isMultiple && Array.isArray(props.modelValue) ? props.modelValue : []
+  props.isMultiple && Array.isArray(model.value) ? model.value : []
 )
 
 /** 입력창 placeholder: 다중 선택에서 이미 선택된 항목이 있으면 숨김 */
@@ -839,9 +830,9 @@ const getLabelByValue = (value: string) =>
 const isOptionSelected = (value: string | number): boolean => {
   const strVal = String(value)
   if (props.isMultiple) {
-    return Array.isArray(props.modelValue) && props.modelValue.includes(strVal)
+    return Array.isArray(model.value) && model.value.includes(strVal)
   }
-  return props.modelValue === strVal
+  return model.value === strVal
 }
 
 const openDropdown = () => {
@@ -850,7 +841,7 @@ const openDropdown = () => {
   inputRef.value?.focus()
 }
 
-const closeDropdown = () => {
+function closeDropdown() {
   isOpen.value = false
   searchQuery.value = ''
   highlightedIndex.value = -1
@@ -861,25 +852,26 @@ const selectOption = (option: FormOption) => {
   const strVal = String(option.value)
 
   if (props.isMultiple) {
-    const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const current = Array.isArray(model.value) ? [...model.value] : []
     const idx = current.indexOf(strVal)
     if (idx >= 0) {
       current.splice(idx, 1)
     } else {
       current.push(strVal)
     }
-    emit('update:modelValue', current)
+    // defineModel: model.value에 직접 할당
+    model.value = current
     searchQuery.value = ''
     inputRef.value?.focus()
   } else {
-    emit('update:modelValue', strVal)
+    model.value = strVal
     closeDropdown()
   }
 }
 
 const removeChip = (value: string) => {
-  if (!Array.isArray(props.modelValue)) return
-  emit('update:modelValue', props.modelValue.filter(v => v !== value))
+  if (!Array.isArray(model.value)) return
+  model.value = model.value.filter(v => v !== value)
 }
 
 const selectHighlighted = () => {
@@ -892,19 +884,16 @@ const moveHighlight = (direction: 1 | -1) => {
   const max = filteredOptions.value.length - 1
   highlightedIndex.value = Math.max(0, Math.min(max, highlightedIndex.value + direction))
 }
-
-// 외부 클릭 시 드롭다운 닫기
-const handleOutsideClick = (event: MouseEvent) => {
-  if (comboRef.value && !comboRef.value.contains(event.target as Node)) {
-    closeDropdown()
-  }
-}
-
-onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
-onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 </script>
 
 <style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
 /* ── Wrapper ── */
 .combo { position: relative; display: inline-block; min-width: 200px; }
 
@@ -915,7 +904,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
   flex-wrap: wrap;
   gap: 4px;
   width: 100%;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: #fff;
   cursor: text;
@@ -925,7 +914,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
   box-sizing: border-box;
 }
 
-.combo__control--focused { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
+.combo__control--focused { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
 .combo__control--disabled { background: #f5f5f5; cursor: not-allowed; }
 
 /* 크기별 min-height */
@@ -967,7 +956,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
   gap: 4px;
   padding: 2px 8px;
   background: #eff2ff;
-  color: #667eea;
+  color: var(--color-primary);
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
@@ -977,7 +966,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 .combo__chip-remove {
   border: none;
   background: none;
-  color: #667eea;
+  color: var(--color-primary);
   cursor: pointer;
   padding: 0;
   font-size: 14px;
@@ -1021,7 +1010,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 .combo__option:hover,
 .combo__option--highlighted { background: #f5f7ff; }
 
-.combo__option--selected { color: #667eea; font-weight: 500; }
+.combo__option--selected { color: var(--color-primary); font-weight: 500; }
 .combo__option--disabled  { color: #ccc; cursor: not-allowed; pointer-events: none; }
 .combo__option--loading,
 .combo__option--empty     { color: #aaa; cursor: default; justify-content: center; }
@@ -1035,7 +1024,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
   width: 14px;
   height: 14px;
   border: 2px solid #e8e8e8;
-  border-top-color: #667eea;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: combo-spin 0.6s linear infinite;
   margin-right: 6px;
@@ -1094,7 +1083,7 @@ selectFirstByDefault=true:
 ┌─────────────────────────────┐
 │ 전체                  ▼     │  ← options[0] 자동 선택됨
 └─────────────────────────────┘
-→ 마운트 시 emit('update:modelValue', options[0].value) 자동 발생
+→ 마운트 시 model.value = options[0].value 자동 설정
 ```
 
 ### isMultiple 동작
@@ -1138,7 +1127,7 @@ isMultiple=true:
     <div
       class="select__control"
       :class="{
-        'select__control--open': isOpen,
+        'select__control--open':     isOpen,
         'select__control--disabled': isDisabled
       }"
       :tabindex="isDisabled ? -1 : 0"
@@ -1153,13 +1142,13 @@ isMultiple=true:
       <!-- 선택된 값 표시 -->
       <span class="select__value">
         <!-- 다중 선택: 개수 표시 -->
-        <template v-if="isMultiple && Array.isArray(modelValue) && modelValue.length > 0">
+        <template v-if="isMultiple && Array.isArray(model) && model.length > 0">
           {{ selectedLabels.join(', ') }}
-          <span class="select__badge">{{ modelValue.length }}</span>
+          <span class="select__badge">{{ model.length }}</span>
         </template>
         <!-- 단일 선택: 선택된 레이블 표시 -->
-        <template v-else-if="!isMultiple && modelValue">
-          {{ getLabel(String(modelValue)) }}
+        <template v-else-if="!isMultiple && model">
+          {{ getLabel(String(model)) }}
         </template>
         <!-- 미선택: placeholder -->
         <template v-else>
@@ -1225,54 +1214,53 @@ isMultiple=true:
 </template>
 
 <script setup lang="ts">
-// 스타일 가이드: <script setup> 사용
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseSelectBox' })
+
 import type { FormOption, FormSize } from '~/types/form'
 
-// ─── Props ────────────────────────────────────────────────────────────────
-const props = defineProps({
-  modelValue: {
-    type: [String, Array] as unknown as () => string | string[],
-    default: ''
-  },
-  options: {
-    type: Array as () => FormOption[],
-    default: () => []
-  },
-  isMultiple: {
-    type: Boolean,
-    default: false
-  },
-  // true 시 마운트 시점에 options[0]을 자동 선택
-  selectFirstByDefault: {
-    type: Boolean,
-    default: false
-  },
-  placeholder: {
-    type: String,
-    default: '선택하세요'
-  },
-  isDisabled: {
-    type: Boolean,
-    default: false
-  },
-  size: {
-    type: String as () => FormSize,
-    default: 'md',
-    validator: (v: string) => ['sm', 'md', 'lg'].includes(v)
-  }
+// ─── Props (TypeScript 유니온 타입 방식 — Vue 3.4+) ───────────────────────
+interface Props {
+  options?:              FormOption[]
+  isMultiple?:           boolean
+  selectFirstByDefault?: boolean
+  placeholder?:          string
+  isDisabled?:           boolean
+  size?:                 FormSize
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  options:              () => [],
+  isMultiple:           false,
+  selectFirstByDefault: false,
+  placeholder:          '선택하세요',
+  isDisabled:           false,
+  size:                 'md',
 })
 
-// ─── Emits ────────────────────────────────────────────────────────────────
-const emit = defineEmits<{
-  'update:modelValue': [value: string | string[]]
-}>()
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+// ❌ 구식: modelValue prop + emit('update:modelValue')
+// ✅ 현대: defineModel로 양방향 바인딩 단순화
+const model = defineModel<string | string[]>({ default: '' })
 
-// ─── Refs ─────────────────────────────────────────────────────────────────
-const selectRef = ref<HTMLElement | null>(null)
+// ─── useTemplateRef (Vue 3.5+) ────────────────────────────────────────────
+// ❌ 구식: const selectRef = ref<HTMLElement | null>(null)
+// ✅ 현대: useTemplateRef()
+const selectRef = useTemplateRef<HTMLElement>('selectRef')
+
+// ─── State ────────────────────────────────────────────────────────────────
+// Nuxt auto-imports: ref는 import 없이 사용 가능
 const isOpen = ref(false)
 
+// ─── onClickOutside (VueUse) ──────────────────────────────────────────────
+// ❌ 구식:
+//   onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
+//   onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
+// ✅ 현대: VueUse onClickOutside (Nuxt auto-imports로 import 불필요)
+onClickOutside(selectRef, closeDropdown)
+
 // ─── Computed ─────────────────────────────────────────────────────────────
+// Nuxt auto-imports: computed는 import 없이 사용 가능
 
 const wrapperClasses = computed(() => [
   'select',
@@ -1282,8 +1270,8 @@ const wrapperClasses = computed(() => [
 
 /** 다중 선택 시 선택된 레이블 배열 */
 const selectedLabels = computed(() => {
-  if (!Array.isArray(props.modelValue)) return []
-  return props.modelValue.map(v => getLabel(v)).filter(Boolean)
+  if (!Array.isArray(model.value)) return []
+  return model.value.map(v => getLabel(v)).filter(Boolean)
 })
 
 // ─── Methods ──────────────────────────────────────────────────────────────
@@ -1294,9 +1282,9 @@ const getLabel = (value: string) =>
 const isOptionSelected = (value: string | number): boolean => {
   const strVal = String(value)
   if (props.isMultiple) {
-    return Array.isArray(props.modelValue) && props.modelValue.includes(strVal)
+    return Array.isArray(model.value) && model.value.includes(strVal)
   }
-  return props.modelValue === strVal
+  return model.value === strVal
 }
 
 const toggleDropdown = () => {
@@ -1304,7 +1292,7 @@ const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
-const closeDropdown = () => { isOpen.value = false }
+function closeDropdown() { isOpen.value = false }
 
 /**
  * 항목 선택 처리
@@ -1317,44 +1305,37 @@ const handleSelect = (option: FormOption, isCtrl: boolean) => {
 
   if (props.isMultiple && isCtrl) {
     // 다중 선택 모드 + Ctrl 클릭: 토글 추가/제거
-    const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const current = Array.isArray(model.value) ? [...model.value] : []
     const idx = current.indexOf(strVal)
     if (idx >= 0) {
       current.splice(idx, 1)
     } else {
       current.push(strVal)
     }
-    emit('update:modelValue', current)
+    // defineModel: model.value에 직접 할당
+    model.value = current
   } else if (props.isMultiple && !isCtrl) {
     // 다중 선택 모드 + 일반 클릭: 해당 항목만 단독 선택
-    emit('update:modelValue', [strVal])
+    model.value = [strVal]
     closeDropdown()
   } else {
     // 단일 선택
-    emit('update:modelValue', strVal)
-    closeDropdown()
-  }
-}
-
-// 외부 클릭 시 닫기
-const handleOutsideClick = (event: MouseEvent) => {
-  if (selectRef.value && !selectRef.value.contains(event.target as Node)) {
+    model.value = strVal
     closeDropdown()
   }
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────
+// Nuxt auto-imports: onMounted, watch는 import 없이 사용 가능
 
 onMounted(() => {
-  document.addEventListener('mousedown', handleOutsideClick)
-
   // selectFirstByDefault: 마운트 시 첫 번째 옵션 자동 선택
   if (props.selectFirstByDefault && props.options.length > 0) {
     const firstOption = props.options[0]
     if (props.isMultiple) {
-      emit('update:modelValue', [String(firstOption.value)])
+      model.value = [String(firstOption.value)]
     } else {
-      emit('update:modelValue', String(firstOption.value))
+      model.value = String(firstOption.value)
     }
   }
 })
@@ -1365,23 +1346,26 @@ watch(
   (newOptions) => {
     if (props.selectFirstByDefault && newOptions.length > 0) {
       const hasSelection = props.isMultiple
-        ? Array.isArray(props.modelValue) && props.modelValue.length > 0
-        : !!props.modelValue
+        ? Array.isArray(model.value) && model.value.length > 0
+        : !!model.value
       if (!hasSelection) {
-        emit('update:modelValue',
-          props.isMultiple
-            ? [String(newOptions[0].value)]
-            : String(newOptions[0].value)
-        )
+        model.value = props.isMultiple
+          ? [String(newOptions[0].value)]
+          : String(newOptions[0].value)
       }
     }
   }
 )
-
-onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 </script>
 
 <style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
 /* ── Wrapper ── */
 .select { position: relative; display: inline-block; min-width: 160px; }
 
@@ -1391,7 +1375,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: #fff;
   cursor: pointer;
@@ -1403,8 +1387,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 
 .select__control:focus,
 .select__control--open {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
   outline: none;
 }
 
@@ -1437,7 +1421,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  background: #667eea;
+  background: var(--color-primary);
   color: #fff;
   border-radius: 9px;
   font-size: 11px;
@@ -1455,7 +1439,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 }
 
 .select__control--open .select__arrow,
-.select__control:hover .select__arrow { color: #667eea; }
+.select__control:hover .select__arrow { color: var(--color-primary); }
 
 /* ── 드롭다운 ── */
 .select__dropdown {
@@ -1501,7 +1485,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 .select--lg .select__option { padding: 11px 16px; font-size: 16px; }
 
 .select__option:hover             { background: #f5f7ff; }
-.select__option--selected         { color: #667eea; font-weight: 500; background: #f0f3ff; }
+.select__option--selected         { color: var(--color-primary); font-weight: 500; background: #f0f3ff; }
 .select__option--disabled         { color: #ccc; cursor: not-allowed; pointer-events: none; }
 .select__option--empty            { color: #aaa; cursor: default; justify-content: center; }
 
@@ -1558,15 +1542,15 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
+// Nuxt auto-imports: ref는 import 없이 사용 가능
 import type { FormOption } from '~/types/form'
 
 // 검색 조건 상태
-const searchName = ref('')
-const searchGroup = ref('')
+const searchName      = ref('')
+const searchGroup     = ref('')
 const selectedStatuses = ref<string[]>([])
-const selectedShifts = ref<string[]>([])
-const selectedMenus = ref<string[]>([])
+const selectedShifts  = ref<string[]>([])
+const selectedMenus   = ref<string[]>([])
 
 // 옵션 목록
 const groupOptions: FormOption[] = [
@@ -1598,137 +1582,30 @@ const handleReset = () => {
   selectedMenus.value = []
 }
 </script>
-
-<template>
-  <div class="search-panel">
-
-    <!-- 텍스트박스: 특수문자 차단 -->
-    <BaseTextBox
-      v-model="searchName"
-      label="메뉴명"
-      placeholder="메뉴명 검색 (특수문자 불가)"
-      :allow-special-chars="false"
-      :max-length="50"
-      :block="true"
-    />
-
-    <!-- 셀렉트박스: 첫번째 값 자동 선택 -->
-    <BaseSelectBox
-      v-model="searchGroup"
-      :options="groupOptions"
-      :select-first-by-default="true"
-    />
-
-    <!-- 셀렉트박스: 다중 선택 -->
-    <BaseSelectBox
-      v-model="selectedStatuses"
-      :options="statusOptions"
-      :is-multiple="true"
-      placeholder="상태 선택"
-    />
-
-    <!-- 콤보박스: 다중 선택 + 타이핑 검색 -->
-    <BaseComboBox
-      v-model="selectedMenus"
-      :options="menuOptions"
-      :is-multiple="true"
-      placeholder="메뉴 검색 및 다중 선택..."
-    />
-
-    <!-- 토글 그룹: count로 개수 지정 (예: 라인 번호 선택) -->
-    <div class="form-row">
-      <span class="form-label">라인 선택</span>
-      <BaseToggleGroup
-        v-model="selectedShifts"
-        :count="5"
-        :is-multiple="true"
-        aria-label="생산 라인 선택"
-      />
-    </div>
-
-    <!-- 토글 그룹: options로 항목 직접 지정 -->
-    <div class="form-row">
-      <span class="form-label">근무 시프트</span>
-      <BaseToggleGroup
-        v-model="selectedShift"
-        :options="[
-          { value: 'day',   label: '주간' },
-          { value: 'night', label: '야간' },
-          { value: 'all',   label: '전체' }
-        ]"
-      />
-    </div>
-
-    <!-- 버튼 (BaseButton 참조) -->
-    <div class="form-actions">
-      <BaseButton btn-type="search" @click="handleSearch" />
-      <BaseButton btn-type="reset"  @click="handleReset" />
-    </div>
-
-  </div>
-</template>
 ```
 
 ---
 
-## 9. 스타일 가이드 적용 체크리스트
+## 9. 현대화 변경점 요약 (Vue 3.4+ / Vue 3.5+)
 
-### A 우선순위 (필수)
-
-- [x] 모든 컴포넌트 이름이 PascalCase (`BaseTextBox`, `BaseToggleGroup`, `BaseComboBox`, `BaseSelectBox`)
-- [x] 모든 컴포넌트 이름이 두 단어 이상 (`Base` + 고유명)
-- [x] Props 타입과 기본값 상세 정의 (4개 컴포넌트 공통)
-- [x] `v-for`에 `:key` 필수 사용 (옵션 목록, chip 등)
-- [x] `v-if`와 `v-for` 동시 사용 금지
-- [x] Scoped 스타일 사용
-
-### B 우선순위 (강력 권장)
-
-- [x] 공통 컴포넌트에 `Base` 접두사
-- [x] Props를 camelCase로 정의 (`allowSpecialChars`, `selectFirstByDefault`, `isMultiple`)
-- [x] Boolean props에 `is` / `has` / `allow` 접두사 사용
-- [x] `<script setup>` Composition API 사용 (4개 컴포넌트 공통)
-- [x] Emit 이벤트 명시적 선언 (`defineEmits`)
-- [x] 복잡한 표현식을 computed로 분리 (`filteredOptions`, `selectedLabels`, `resolvedOptions` 등)
-- [x] 메서드명 동사로 시작 (`handleInput`, `handleSelect`, `handleToggle`)
-
-### C 우선순위 (권장)
-
-- [x] Props validator로 유효한 값 제한 (`size`, `type`)
-- [x] `aria-label`, `aria-expanded`, `aria-haspopup`, `aria-selected`, `aria-pressed` 접근성 처리
-- [x] `role="listbox"`, `role="option"`, `role="group"` 시맨틱 마크업
-- [x] 키보드 네비게이션 지원 (Enter, Space, Escape, ArrowUp/Down)
-- [x] `onUnmounted`에서 이벤트 리스너 정리 (메모리 누수 방지)
-
----
-
-## 10. 파일 구조
-
-```
-components/
-└── base/
-    ├── BaseButton.vue          ← 공통 버튼       (common-button-guide.md)
-    ├── BaseGrid.vue            ← 공통 그리드      (common-grid-guide.md)
-    ├── BaseTextBox.vue         ← 텍스트박스       (이 문서)
-    ├── BaseToggleGroup.vue     ← 토글 그룹        (이 문서)
-    ├── BaseComboBox.vue        ← 콤보박스         (이 문서)
-    └── BaseSelectBox.vue       ← 셀렉트박스       (이 문서)
-
-types/
-├── grid.ts                     ← 그리드 타입
-└── form.ts                     ← 폼 공통 타입 (FormOption, FormSize)
-
-docs/
-├── common-button-guide.md
-├── common-grid-guide.md
-└── common-form-components-guide.md   ← 이 문서
-```
+| 항목 | 구식 패턴 | 현대 패턴 | 적용 버전 |
+|------|-----------|-----------|-----------|
+| v-model 바인딩 | `modelValue` prop + `emit('update:modelValue')` | `defineModel()` | Vue 3.4+ |
+| TypeScript Props | `defineProps({...})` with runtime validator | `withDefaults(defineProps<Props>(), {...})` | Vue 3.4+ |
+| 고유 ID 생성 | 수동 카운터 (`let idCounter = 0`) | `useId()` | Vue 3.5+ |
+| Template Ref | `ref<HTMLElement\|null>(null)` | `useTemplateRef<HTMLElement>('name')` | Vue 3.5+ |
+| 외부 클릭 감지 | `addEventListener` / `removeEventListener` | `onClickOutside` (VueUse) | VueUse |
+| Auto-imports | `import { ref, computed } from 'vue'` | import 없이 바로 사용 | Nuxt 3 |
+| CSS 색상 | 하드코딩 hex (`#667eea`) | CSS 변수 (`var(--color-primary)`) | 현대 CSS |
+| 컴포넌트명 | (없음) | `defineOptions({ name: 'Base...' })` | Vue 3.3+ |
 
 ---
 
 ## 참고 자료
 
 - [Vue.js 공식 스타일 가이드](https://vuejs.org/style-guide/)
-- [Vue 3 Composition API](https://vuejs.org/guide/extras/composition-api-faq)
-- [Vue 3 v-model 공식 문서](https://vuejs.org/guide/components/v-model)
-- [WAI-ARIA Listbox Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/)
+- [Vue 3.4 defineModel](https://vuejs.org/guide/components/v-model)
+- [Vue 3.5 useId](https://vuejs.org/api/composition-api-helpers#useid)
+- [Vue 3.5 useTemplateRef](https://vuejs.org/api/composition-api-helpers#usetemplateref)
+- [VueUse onClickOutside](https://vueuse.org/core/onClickOutside/)
+- [Nuxt 3 컴포넌트 자동 임포트](https://nuxt.com/docs/guide/directory-structure/components)

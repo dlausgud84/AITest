@@ -10,9 +10,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useTheme } from '~/composables/useTheme'
 
 const route = useRoute()
 const isAuthenticated = ref(false)
+const { initTheme } = useTheme()
 
 // 자체 레이아웃을 포함한 페이지 — AppLayout 미사용
 const standalonePages = ['/', '/login']
@@ -30,6 +32,8 @@ function checkAuth() {
 }
 
 onMounted(() => {
+  // 모든 페이지에서 저장된 테마를 복원 (useState reactive 상태 동기화)
+  initTheme()
   checkAuth()
 })
 

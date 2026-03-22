@@ -73,33 +73,33 @@ public class MenuController {
      * 메뉴 생성
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<String>> createMenu(@RequestBody MenuDTO menuDTO) {
+    public ResponseEntity<ApiResponse<Void>> createMenu(@RequestBody MenuDTO menuDTO) {
         Menu menu = toMenu(menuDTO);
         menu.setCreatorId(getCurrentUserId());
         menuService.createMenu(menu);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("메뉴가 생성되었습니다."));
+                .body(ApiResponse.success("메뉴가 생성되었습니다.", null));
     }
 
     /**
      * 메뉴 수정
      */
     @PutMapping("/{menuId}")
-    public ResponseEntity<ApiResponse<String>> updateMenu(@PathVariable String menuId, @RequestBody MenuDTO menuDTO) {
+    public ResponseEntity<ApiResponse<Void>> updateMenu(@PathVariable String menuId, @RequestBody MenuDTO menuDTO) {
         Menu menu = toMenu(menuDTO);
         menu.setMenuId(menuId);
         menu.setModifierId(getCurrentUserId());
         menuService.updateMenu(menu);
-        return ResponseEntity.ok(ApiResponse.success("메뉴가 수정되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success("메뉴가 수정되었습니다.", null));
     }
 
     /**
      * 메뉴 삭제
      */
     @DeleteMapping("/{menuId}")
-    public ResponseEntity<ApiResponse<String>> deleteMenu(@PathVariable String menuId) {
+    public ResponseEntity<ApiResponse<Void>> deleteMenu(@PathVariable String menuId) {
         menuService.deleteMenu(menuId);
-        return ResponseEntity.ok(ApiResponse.success("메뉴가 삭제되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success("메뉴가 삭제되었습니다.", null));
     }
 
     // DTO → Domain 변환

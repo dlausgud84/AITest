@@ -1,10 +1,24 @@
-import { ref } from 'vue'
+/** 메뉴 도메인 타입 (백엔드 Menu.java 기준) */
+export interface MenuItem {
+  menuId: string
+  menuName: string
+  menuGroup?: string
+  menuType?: number       // 0: 폴더, 1: 메뉴, 2: 분리선
+  pageId?: string
+  iconImage?: string
+  menuUrl?: string
+  sortOrder?: number
+  creatorId?: string
+  createDttm?: string
+  modifierId?: string
+  modifyDttm?: string
+}
 
-interface MenuResponse {
+interface MenuResponse<T = MenuItem | MenuItem[]> {
   success: boolean
   code: string
   message: string
-  data: any
+  data: T
 }
 
 /**
@@ -13,7 +27,7 @@ interface MenuResponse {
  * SSR 환경 호환을 위해 Nuxt의 $fetch를 사용합니다.
  */
 export const useMenuAPI = () => {
-  const menus = ref<any[]>([])
+  const menus = ref<MenuItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -28,7 +42,7 @@ export const useMenuAPI = () => {
     error.value = null
 
     try {
-      const result = await $fetch<MenuResponse>(`${apiBaseUrl}/api/menus`)
+      const result = await $fetch<MenuResponse<MenuItem[]>>(`${apiBaseUrl}/api/menus`)
       if (result.success) {
         menus.value = result.data || []
       } else {
@@ -45,12 +59,12 @@ export const useMenuAPI = () => {
   /**
    * 메뉴 그룹별 조회
    */
-  const fetchMenusByGroup = async (menuGroup: string) => {
+  const fetchMenusByGroup = async (menuGroup: string): Promise<MenuItem[]> => {
     loading.value = true
     error.value = null
 
     try {
-      const result = await $fetch<MenuResponse>(`${apiBaseUrl}/api/menus/group/${menuGroup}`)
+      const result = await $fetch<MenuResponse<MenuItem[]>>(`${apiBaseUrl}/api/menus/group/${menuGroup}`)
       if (result.success) {
         return result.data || []
       } else {
@@ -69,9 +83,9 @@ export const useMenuAPI = () => {
   /**
    * 특정 메뉴 조회
    */
-  const fetchMenuById = async (menuId: string) => {
+  const fetchMenuById = async (menuId: string): Promise<MenuItem | null> => {
     try {
-      const result = await $fetch<MenuResponse>(`${apiBaseUrl}/api/menus/${menuId}`)
+      const result = await $fetch<MenuResponse<MenuItem>>(`${apiBaseUrl}/api/menus/${menuId}`)
       if (result.success) {
         return result.data
       } else {
@@ -87,7 +101,7 @@ export const useMenuAPI = () => {
   /**
    * 메뉴 생성
    */
-  const createMenu = async (menuData: any) => {
+  const createMenu = async (menuData: Omit<MenuItem, 'menuId' | 'creatorId' | 'createDttm' | 'modifierId' | 'modifyDttm'>): Promise<boolean> => {
     loading.value = true
     error.value = null
 
@@ -117,7 +131,7 @@ export const useMenuAPI = () => {
   /**
    * 메뉴 수정
    */
-  const updateMenu = async (menuId: string, menuData: any) => {
+  const updateMenu = async (menuId: string, menuData: Partial<Omit<MenuItem, 'menuId' | 'creatorId' | 'createDttm' | 'modifierId' | 'modifyDttm'>>): Promise<boolean> => {
     loading.value = true
     error.value = null
 

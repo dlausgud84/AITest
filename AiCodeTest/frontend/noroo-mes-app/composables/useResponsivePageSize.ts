@@ -1,4 +1,3 @@
-import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 interface BreakPoint {
   maxWidth: number

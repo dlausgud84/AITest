@@ -26,6 +26,14 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'AiCodeTest Manufacturing Execution System' }
+      ],
+      // 테마 flash 방지: CSS가 적용되기 전 data-theme 속성을 즉시 설정
+      // localStorage에 저장된 테마를 읽어 <html> 태그에 적용
+      script: [
+        {
+          innerHTML: `(function(){try{var t=localStorage.getItem('appTheme');document.documentElement.setAttribute('data-theme',t||'dark');}catch(e){}})();`,
+          tagPosition: 'head',
+        }
       ]
     }
   }

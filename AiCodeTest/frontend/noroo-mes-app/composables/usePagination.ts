@@ -1,4 +1,4 @@
-import { ref, computed, watch, unref, type Ref } from 'vue'
+import { type Ref } from 'vue'
 
 /**
  * 페이지네이션 로직을 제공하는 Composable
@@ -37,8 +37,8 @@ export const usePagination = (items: any[] | Ref<any[]>, initialPageSize: number
     }
   }
 
-  // 아이템 수 변경 시 페이지 리셋
-  watch(() => unref(items).length, () => {
+  // 아이템 수 또는 pageSize 변경 시 페이지 리셋
+  watch([() => unref(items).length, pageSize], () => {
     currentPage.value = 1
   })
 

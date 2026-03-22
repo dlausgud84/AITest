@@ -60,6 +60,7 @@ project(":apps:app") {
         implementation(project(":modules:common"))
         implementation(project(":modules:menu"))
         implementation(project(":modules:auth"))
+        implementation(project(":modules:user"))
 
         testImplementation("org.springframework.boot:spring-boot-starter-test")
     }
@@ -83,6 +84,15 @@ project(":modules:menu") {
 
 // 인증 도메인 모듈
 project(":modules:auth") {
+    dependencies {
+        implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
+        implementation(project(":modules:common"))
+    }
+}
+
+// 사용자 도메인 모듈
+project(":modules:user") {
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter")
         implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")

@@ -21,7 +21,11 @@
 
 .main-content {
   flex: 1;
-  overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--page-bg);
   transition: background 0.25s ease;
 }

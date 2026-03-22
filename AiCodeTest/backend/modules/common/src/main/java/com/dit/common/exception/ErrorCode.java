@@ -17,7 +17,12 @@ public enum ErrorCode {
     // 메뉴 관련 에러
     MENU_NOT_FOUND("M001", "메뉴를 찾을 수 없습니다."),
     MENU_DUPLICATE("M002", "이미 존재하는 메뉴입니다."),
-    INVALID_MENU_DATA("M003", "유효하지 않은 메뉴 데이터입니다.");
+    INVALID_MENU_DATA("M003", "유효하지 않은 메뉴 데이터입니다."),
+
+    // 사용자 관련 에러
+    USER_NOT_FOUND("U001", "사용자를 찾을 수 없습니다."),
+    USER_DUPLICATE("U002", "이미 존재하는 사용자 ID입니다."),
+    INVALID_USER_DATA("U003", "유효하지 않은 사용자 데이터입니다.");
 
     private final String code;
     private final String message;

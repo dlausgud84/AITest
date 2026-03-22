@@ -1,6 +1,7 @@
 # 공통 그리드 컴포넌트 가이드
 
 > Vue.js 공식 스타일 가이드 (https://vuejs.org/style-guide/) 기반으로 작성
+> Vue 3.4+ / Vue 3.5+ / Nuxt 3 auto-imports 트렌드 적용
 
 ---
 
@@ -171,7 +172,7 @@ export interface GridPageChange {
 
 | 규칙 | 우선순위 | 내용 |
 |------|----------|------|
-| **Props는 항상 상세하게 정의** | A (필수) | 타입, 기본값, validator 명시 |
+| **Props는 항상 상세하게 정의** | A (필수) | 타입, 기본값 명시 |
 | **Props 이름은 camelCase** | B (강력 권장) | `maxRows`, `hasPagination` |
 | **Boolean props는 접두사 규칙** | B (강력 권장) | `is`, `has`, `can` 접두사 |
 
@@ -210,8 +211,8 @@ export interface GridPageChange {
 ### `composables/useGridPagination.ts`
 
 ```typescript
+// Nuxt auto-imports: ref, computed, watch는 import 없이 사용 가능
 // 스타일 가이드: 재사용 가능한 로직은 Composable로 분리
-import { ref, computed, watch } from 'vue'
 
 export const useGridPagination = (
   totalItems: () => number,  // 전체 건수를 반환하는 getter
@@ -280,8 +281,8 @@ export const useGridPagination = (
 ### `composables/useColumnResize.ts`
 
 ```typescript
+// Nuxt auto-imports: ref, reactive는 import 없이 사용 가능
 // 스타일 가이드: 재사용 가능한 로직은 Composable로 분리
-import { ref, reactive } from 'vue'
 import type { GridColumn } from '~/types/grid'
 
 export const useColumnResize = (columns: GridColumn[]) => {
@@ -328,14 +329,16 @@ export const useColumnResize = (columns: GridColumn[]) => {
 ### `composables/useInfiniteScroll.ts`
 
 ```typescript
+// Nuxt auto-imports: onMounted, onUnmounted는 import 없이 사용 가능
 // 스타일 가이드: 재사용 가능한 로직은 Composable로 분리
-import { ref, onMounted, onUnmounted } from 'vue'
 
 export const useInfiniteScroll = (
   onLoadMore: () => void,
   options = { threshold: 0.1 }
 ) => {
-  const sentinelRef = ref<HTMLElement | null>(null)
+  // ❌ 구식: const sentinelRef = ref<HTMLElement | null>(null)
+  // ✅ 현대: useTemplateRef (Vue 3.5+)
+  const sentinelRef = useTemplateRef<HTMLElement>('sentinelRef')
   let observer: IntersectionObserver | null = null
 
   onMounted(() => {
@@ -364,7 +367,7 @@ export const useInfiniteScroll = (
   <div :class="gridWrapperClasses">
 
     <!-- ── 스켈레톤 로딩 ── -->
-    <div v-if="isLoading && rows.length === 0" class="grid__loading" role="status">
+    <div v-if="isLoading && rows.length === 0" class="grid__loading" role="status" aria-label="데이터 로딩 중">
       <div v-for="n in (maxRows ?? 5)" :key="n" class="grid__skeleton-row">
         <div v-for="col in columns" :key="col.key" class="grid__skeleton-cell" />
       </div>
@@ -445,9 +448,10 @@ export const useInfiniteScroll = (
       </table>
 
       <!-- ── 무한 스크롤 sentinel (maxRows 미설정 시) ── -->
+      <!-- useTemplateRef에서 'sentinelRef' 이름으로 참조 -->
       <div v-if="!maxRows" ref="sentinelRef" class="grid__sentinel" aria-hidden="true">
-        <div v-if="isLoading && rows.length > 0" class="grid__load-more-spinner" />
-        <span v-else-if="!hasMoreData && rows.length > 0" class="grid__end-message">
+        <div v-if="isLoading && rows.length > 0" class="grid__load-more-spinner" role="status" />
+        <span v-else-if="!hasMoreData && rows.length > 0" class="grid__end-message" aria-live="polite">
           마지막 데이터입니다
         </span>
       </div>
@@ -457,7 +461,7 @@ export const useInfiniteScroll = (
     <div v-if="maxRows && hasPagination" class="grid__pagination" role="navigation" aria-label="페이지 네비게이션">
 
       <!-- 전체 건수 정보 -->
-      <span class="grid__pagination-info">
+      <span class="grid__pagination-info" aria-live="polite">
         총 <strong>{{ resolvedTotalCount.toLocaleString() }}</strong>건
         ({{ currentPage }} / {{ totalPages }} 페이지)
       </span>
@@ -523,82 +527,54 @@ export const useInfiniteScroll = (
 </template>
 
 <script setup lang="ts">
-// 스타일 가이드: <script setup> 사용 (Vue 3 Composition API 권장 방식)
-import { computed } from 'vue'
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseGrid' })
+
+// Nuxt auto-imports: computed는 import 없이 사용 가능
 import { useColumnResize } from '~/composables/useColumnResize'
 import { useInfiniteScroll } from '~/composables/useInfiniteScroll'
 import { useGridPagination } from '~/composables/useGridPagination'
 import type { GridColumn, GridSort, GridPageChange } from '~/types/grid'
 
-// ─── Props ────────────────────────────────────────────────────────────────
-// 스타일 가이드: Props는 타입과 validator를 상세하게 정의
-const props = defineProps({
-  columns: {
-    type: Array as () => GridColumn[],
-    default: () => []
-  },
-  rows: {
-    type: Array as () => Record<string, any>[],
-    default: () => []
-  },
-  rowKey: {
-    type: String,
-    default: 'id'
-  },
-  maxRows: {
-    type: Number,
-    default: undefined
-  },
-  // hasPagination: maxRows 설정 시에만 유효
-  // true  → maxRows = 페이지당 행 수, 하단 페이지네이션 UI 표시
-  // false → maxRows = 컨테이너 최대 높이 (내부 스크롤)
-  hasPagination: {
-    type: Boolean,
-    default: false
-  },
-  // 서버사이드 페이지네이션 전용: 전체 데이터 건수
-  // 미설정 시 rows.length를 전체 건수로 사용 (클라이언트사이드)
-  totalCount: {
-    type: Number,
-    default: undefined
-  },
-  rowHeight: {
-    type: Number,
-    default: 48
-  },
-  isResizable: {
-    type: Boolean,
-    default: false
-  },
-  isLoading: {
-    type: Boolean,
-    default: false
-  },
-  hasMoreData: {
-    type: Boolean,
-    default: false
-  },
-  emptyMessage: {
-    type: String,
-    default: '데이터가 없습니다'
-  },
-  selectedRowKey: {
-    type: [String, Number],
-    default: undefined
-  },
-  currentSort: {
-    type: Object as () => GridSort | null,
-    default: null
-  }
+// ─── Props (TypeScript 유니온 타입 방식 — Vue 3.4+) ───────────────────────
+// ❌ 구식: defineProps({...}) with runtime validator
+// ✅ 현대: withDefaults + interface
+interface Props {
+  columns?:        GridColumn[]
+  rows?:           Record<string, any>[]
+  rowKey?:         string
+  maxRows?:        number
+  hasPagination?:  boolean
+  totalCount?:     number
+  rowHeight?:      number
+  isResizable?:    boolean
+  isLoading?:      boolean
+  hasMoreData?:    boolean
+  emptyMessage?:   string
+  selectedRowKey?: string | number
+  currentSort?:    GridSort | null
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  columns:      () => [],
+  rows:         () => [],
+  rowKey:       'id',
+  hasPagination: false,
+  rowHeight:    48,
+  isResizable:  false,
+  isLoading:    false,
+  hasMoreData:  false,
+  emptyMessage: '데이터가 없습니다',
+  currentSort:  null,
 })
 
 // ─── Emits ───────────────────────────────────────────────────────────────
 // 스타일 가이드: Emit은 명시적으로 선언
 const emit = defineEmits<{
-  'row-click': [row: Record<string, any>]
-  'sort-change': [sort: GridSort]
-  'load-more': []
-  'page-change': [payload: GridPageChange]
+  'row-click':     [row: Record<string, any>]
+  'sort-change':   [sort: GridSort]
+  'load-more':     []
+  'page-change':   [payload: GridPageChange]
   'column-resize': [payload: { key: string; width: number }]
 }>()
 
@@ -606,6 +582,7 @@ const emit = defineEmits<{
 const { columnWidths, draggingKey, startResize } = useColumnResize(props.columns)
 
 // 무한 스크롤: maxRows 미설정 시에만 동작
+// useInfiniteScroll 내부에서 useTemplateRef('sentinelRef') 사용 (Vue 3.5+)
 const { sentinelRef } = useInfiniteScroll(() => {
   if (!props.maxRows && props.hasMoreData && !props.isLoading) {
     emit('load-more')
@@ -628,6 +605,7 @@ const {
 )
 
 // ─── Computed ─────────────────────────────────────────────────────────────
+// Nuxt auto-imports: computed는 import 없이 사용 가능
 // 스타일 가이드: 복잡한 표현식은 computed로 분리
 
 /** 실제로 테이블에 렌더링할 행 목록 */
@@ -649,11 +627,11 @@ const resolvedTotalCount = computed(() =>
 const gridWrapperClasses = computed(() => [
   'grid',
   {
-    'grid--resizable': props.isResizable,
-    'grid--paginated': props.maxRows && props.hasPagination,
+    'grid--resizable':  props.isResizable,
+    'grid--paginated':  props.maxRows && props.hasPagination,
     'grid--fixed-rows': props.maxRows && !props.hasPagination,
-    'grid--infinite': !props.maxRows,
-    'grid--loading': props.isLoading
+    'grid--infinite':   !props.maxRows,
+    'grid--loading':    props.isLoading
   }
 ])
 
@@ -757,6 +735,15 @@ const handlePageClick = (page: number) => {
 </script>
 
 <style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.45);
+  --color-primary-hover: #f5f7ff;
+  --color-border:        #e8e8e8;
+  --color-border-light:  #f0f0f0;
+}
+
 /* 스타일 가이드: scoped 스타일로 컴포넌트 격리 */
 
 /* ── Wrapper ── */
@@ -764,7 +751,7 @@ const handlePageClick = (page: number) => {
   position: relative;
   width: 100%;
   background: #fff;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -798,7 +785,7 @@ const handlePageClick = (page: number) => {
   text-align: left;
   font-weight: 600;
   color: #333;
-  border-bottom: 2px solid #e8e8e8;
+  border-bottom: 2px solid var(--color-border);
   white-space: nowrap;
   position: relative;
   user-select: none;
@@ -820,7 +807,7 @@ const handlePageClick = (page: number) => {
   display: inline-flex;
   align-items: center;
   margin-left: 4px;
-  color: #667eea;
+  color: var(--color-primary);
   vertical-align: middle;
 }
 
@@ -838,19 +825,19 @@ const handlePageClick = (page: number) => {
 
 .grid__resize-handle:hover,
 .grid__resize-handle--active {
-  background: rgba(102, 126, 234, 0.45);
+  background: var(--color-primary-light);
 }
 
 /* ── 바디 ── */
 .grid__tbody .grid__tr {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-light);
   transition: background 0.15s;
   cursor: pointer;
 }
 
-.grid__tbody .grid__tr:hover        { background: #f5f7ff; }
+.grid__tbody .grid__tr:hover        { background: var(--color-primary-hover); }
 .grid__tbody .grid__tr--selected    { background: #eff2ff; }
-.grid__tbody .grid__tr:focus        { outline: 2px solid #667eea; outline-offset: -2px; }
+.grid__tbody .grid__tr:focus        { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 
 /* ── 셀 ── */
 .grid__td {
@@ -888,7 +875,7 @@ const handlePageClick = (page: number) => {
   width: 20px;
   height: 20px;
   border: 2px solid #e8e8e8;
-  border-top-color: #667eea;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: grid-spin 0.7s linear infinite;
 }
@@ -902,7 +889,7 @@ const handlePageClick = (page: number) => {
   display: flex;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .grid__skeleton-cell {
@@ -925,7 +912,7 @@ const handlePageClick = (page: number) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--color-border);
   background: #fafafa;
   gap: 12px;
   flex-wrap: wrap;
@@ -956,7 +943,7 @@ const handlePageClick = (page: number) => {
   min-width: 32px;
   height: 32px;
   padding: 0 8px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: #fff;
   color: #555;
@@ -968,21 +955,21 @@ const handlePageClick = (page: number) => {
 
 .grid__page-btn:hover:not(:disabled) {
   background: #f0f3ff;
-  border-color: #667eea;
-  color: #667eea;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* 현재 페이지 */
 .grid__page-btn--active {
-  background: #667eea;
-  border-color: #667eea;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: #fff;
   font-weight: 600;
   cursor: default;
 }
 
 .grid__page-btn--active:hover {
-  background: #667eea;
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -1056,6 +1043,7 @@ maxRows = 10, hasPagination = true
 
 ```vue
 <script setup lang="ts">
+// Nuxt auto-imports: ref, onMounted는 import 없이 사용 가능
 const rows = ref([])
 const totalCount = ref(0)
 const isLoading = ref(false)
@@ -1172,7 +1160,7 @@ const columns: GridColumn[] = [
   </template>
 
   <template #cell-action="{ row }">
-    <BaseButton btn-type="save"   size="sm" @click.stop="editRow(row)" />
+    <BaseButton btn-type="update" size="sm" @click.stop="editRow(row)" />
     <BaseButton btn-type="delete" size="sm" @click.stop="deleteRow(row)" />
   </template>
 
@@ -1190,7 +1178,7 @@ const columns: GridColumn[] = [
 
 ```vue
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+// Nuxt auto-imports: ref, computed, onMounted는 import 없이 사용 가능
 import { useMenuAPI } from '~/composables/useMenuAPI'
 import type { GridColumn, GridSort, GridPageChange } from '~/types/grid'
 
@@ -1248,19 +1236,18 @@ onMounted(fetchMenus)
     <BaseGrid
       :columns="columns"
       :rows="filteredRows"
-      row-key="menuId"
       :max-rows="10"
       :has-pagination="true"
-      :is-resizable="true"
       :is-loading="loading"
+      :is-resizable="true"
       :current-sort="currentSort"
-      empty-message="메뉴가 없습니다"
-      @sort-change="sort => currentSort = sort"
-      @row-click="editMenu"
+      row-key="menuId"
+      @sort-change="currentSort = $event"
+      @row-click="handleRowClick"
     >
       <template #cell-action="{ row }">
-        <BaseButton btn-type="save"   size="sm" @click.stop="editMenu(row)" />
-        <BaseButton btn-type="delete" size="sm" @click.stop="confirmDelete(row.menuId)" />
+        <BaseButton btn-type="update" size="sm" @click.stop="openEdit(row)" />
+        <BaseButton btn-type="delete" size="sm" @click.stop="openDelete(row)" />
       </template>
     </BaseGrid>
   </div>
@@ -1269,61 +1256,16 @@ onMounted(fetchMenus)
 
 ---
 
-## 13. 스타일 가이드 적용 체크리스트
+## 13. 현대화 변경점 요약 (Vue 3.4+ / Vue 3.5+)
 
-### A 우선순위 (필수)
-
-- [x] 컴포넌트 이름이 PascalCase (`BaseGrid`)
-- [x] 컴포넌트 이름이 두 단어 이상 (`Base` + `Grid`)
-- [x] Props 타입과 기본값 상세 정의
-- [x] `v-for`에 `:key` 필수 사용 (`row[rowKey]`, `col.key`, `page`)
-- [x] `v-if`와 `v-for` 동시 사용 금지 (분리 처리)
-- [x] Scoped 스타일 사용
-
-### B 우선순위 (강력 권장)
-
-- [x] 공통 컴포넌트에 `Base` 접두사 사용
-- [x] Props를 camelCase로 정의 (`maxRows`, `hasPagination`, `totalCount`)
-- [x] Boolean props에 `is` / `has` 접두사 사용 (`isResizable`, `isLoading`, `hasPagination`, `hasMoreData`)
-- [x] `<script setup>` Composition API 사용
-- [x] Emit 이벤트 명시적 선언 (`defineEmits`)
-- [x] 복잡한 표현식을 computed로 분리 (`displayedRows`, `resolvedTotalCount`, `scrollContainerStyle` 등)
-- [x] 메서드명 동사로 시작 (`handleRowClick`, `handleHeaderClick`, `handlePageClick`)
-- [x] 재사용 로직을 Composable로 분리 (`useColumnResize`, `useInfiniteScroll`, `useGridPagination`)
-
-### C 우선순위 (권장)
-
-- [x] `aria-sort`로 정렬 상태 접근성 처리
-- [x] `role="navigation"` + `aria-label`로 페이지네이션 접근성 처리
-- [x] `aria-current="page"`로 현재 페이지 접근성 처리
-- [x] `tabindex="0"` + `keydown.enter`로 키보드 행 선택 지원
-- [x] 슬롯으로 커스텀 렌더링 확장성 확보
-- [x] `onUnmounted`에서 IntersectionObserver 정리 (메모리 누수 방지)
-
----
-
-## 14. 파일 구조
-
-```
-components/
-└── base/
-    ├── BaseButton.vue          ← 공통 버튼 (common-button-guide.md 참조)
-    └── BaseGrid.vue            ← 공통 그리드 (이 문서)
-
-composables/
-├── useColumnResize.ts          ← 컬럼 크기 조절 로직
-├── useInfiniteScroll.ts        ← 무한 스크롤 로직
-├── useGridPagination.ts        ← 그리드 내장 페이지네이션 로직
-├── useGridSort.ts              ← 기존 정렬 로직 (재사용)
-└── usePagination.ts            ← 기존 페이지네이션 로직 (재사용)
-
-types/
-└── grid.ts                     ← GridColumn, GridSort, GridPageChange 타입 정의
-
-docs/
-├── common-button-guide.md
-└── common-grid-guide.md        ← 이 문서
-```
+| 항목 | 구식 패턴 | 현대 패턴 | 적용 버전 |
+|------|-----------|-----------|-----------|
+| TypeScript Props | `defineProps({...})` with runtime validator | `withDefaults(defineProps<Props>(), {...})` | Vue 3.4+ |
+| Template Ref (sentinel) | `ref<HTMLElement\|null>(null)` | `useTemplateRef<HTMLElement>('sentinelRef')` | Vue 3.5+ |
+| Auto-imports | `import { computed } from 'vue'` | import 없이 바로 사용 | Nuxt 3 |
+| CSS 색상 | 하드코딩 hex (`#667eea`) | CSS 변수 (`var(--color-primary)`) | 현대 CSS |
+| 컴포넌트명 | (없음) | `defineOptions({ name: 'BaseGrid' })` | Vue 3.3+ |
+| 접근성 | role 없음 | `role="status"`, `aria-live="polite"` 추가 | ARIA |
 
 ---
 
@@ -1331,5 +1273,6 @@ docs/
 
 - [Vue.js 공식 스타일 가이드](https://vuejs.org/style-guide/)
 - [Vue 3 Composition API](https://vuejs.org/guide/extras/composition-api-faq)
-- [IntersectionObserver MDN](https://developer.mozilla.org/ko/docs/Web/API/Intersection_Observer_API)
+- [Vue 3.5 useTemplateRef](https://vuejs.org/api/composition-api-helpers#usetemplateref)
 - [Nuxt 3 컴포넌트 자동 임포트](https://nuxt.com/docs/guide/directory-structure/components)
+- [MDN — IntersectionObserver](https://developer.mozilla.org/ko/docs/Web/API/IntersectionObserver)

@@ -4,7 +4,8 @@ include(
     "apps:app",
     "modules:common",
     "modules:menu",
-    "modules:auth"
+    "modules:auth",
+    "modules:user"
 )
 
 pluginManagement {
