@@ -41,12 +41,12 @@ frontend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은
 
 | 단계 | 파일 | 내용 |
 |---|---|---|
-| 1. 조사 | `.claude/frontend/rules/Research.md` | 요구사항 분석, API 연동 조사, 기존 리소스 파악 |
-| 2. 계획 | `.claude/frontend/rules/Plan.md` | 라우팅 및 뷰 설계, 컴포넌트 설계, 상태 관리 및 데이터 패칭 설계 |
-| 3. 테스트 작성 | `.claude/frontend/rules/TestCodeGeneration.md` | Composables 단위 테스트, UI 컴포넌트 단위 테스트, Edge Case 커버리지 |
+| 1. 조사 | `.claude/frontend/rules/Research.md` | 요구사항 및 UI/UX 분석, API 연동 조사, 기존 리소스 파악, Nuxt 3 렌더링 전략 파악 |
+| 2. 계획 | `.claude/frontend/rules/Plan.md` | 라우팅 및 뷰 설계, 컴포넌트 설계, 상태 관리 및 데이터 패칭 설계, 보안 설계 |
+| 3. 테스트 작성 | `.claude/frontend/rules/TestCodeGeneration.md` | Composables 단위 테스트, 전역 상태(Pinia) 단위 테스트, UI 컴포넌트 단위 테스트, Edge Case 커버리지, 보안 테스트 |
 | 4. 구현 | `.claude/frontend/rules/Implementation.md` | 타입 정의, 로직 구현, UI 및 라우팅 구현, UX 처리 및 SEO |
-| 5. 검증 | `.claude/frontend/rules/Verification.md` | 기능 검증, 코드 품질 및 정적 분석, 빌드 검증 |
-| 6. 최적화 | `.claude/frontend/rules/Optimization.md` | 렌더링 성능 및 청크 최적화, 에셋 최적화, 웹 접근성 |
+| 5. 검증 | `.claude/frontend/rules/Verification.md` | 기능 검증 및 브라우저 테스트, 코드 품질 및 정적 분석, 빌드 및 렌더링 검증, 보안 검증 |
+| 6. 최적화 | `.claude/frontend/rules/Optimization.md` | 렌더링 성능 및 청크 최적화, 에셋 최적화, 웹 접근성 및 SEO, 보안 최적화 |
 
 ## 개발 단계별 backend Rules
 
@@ -54,12 +54,12 @@ backend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 
 
 | 단계 | 파일 | 내용 |
 |---|---|---|
-| 1. 조사 | `.claude/backend/rules/Research.md` | 요구사항 파악, 기존 코드 및 DB 분석 |
+| 1. 조사 | `.claude/backend/rules/Research.md` | 요구사항 및 API 스펙 파악, 보안 및 권한 분석, 기존 코드 및 DB 분석, 외부 인터페이스 분석 |
 | 2. 계획 | `.claude/backend/rules/Plan.md` | API 및 DTO 설계, DB 및 MyBatis 설계, 도메인 및 서비스 설계 |
-| 3. 테스트 작성 | `.claude/backend/rules/TestCodeGeneration.md` | 단위 테스트, 통합 테스트 |
+| 3. 테스트 작성 | `.claude/backend/rules/TestCodeGeneration.md` | 단위 테스트, API 계층 테스트, 통합 및 데이터 계층 테스트 |
 | 4. 구현 | `.claude/backend/rules/Implementation.md` | Data Access 계층 구현, Business 로직 계층 구현, Presentation 계층 구현, 공통 처리 |
-| 5. 검증 | `.claude/backend/rules/Verification.md` | API 기능 점검, 빌드 및 정적 분석, 문서 최신화 |
-| 6. 최적화 | `.claude/backend/rules/Optimization.md` | MSSQL 쿼리 튜닝, 자원 관리 및 보안, 로깅 |
+| 5. 검증 | `.claude/backend/rules/Verification.md` | API 기능 및 로깅 점검, 빌드 및 테스트 커버리지 분석, 문서 최신화 |
+| 6. 최적화 | `.claude/backend/rules/Optimization.md` | MSSQL 쿼리 튜닝, 자원 관리 및 보안, 로깅 및 모니터링 |
 
 
 ## 기본 규칙
