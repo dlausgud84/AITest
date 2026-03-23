@@ -70,7 +70,7 @@
 import type { LanguageItem } from '~/composables/useLanguageAPI'
 
 const emit = defineEmits<{
-  select: [languageId: string]
+  select: [languageId: string, languageName: string]
   close:  []
 }>()
 
@@ -103,11 +103,12 @@ function select(item: LanguageItem) {
 }
 
 function confirm(item: LanguageItem) {
-  emit('select', item.languageId)
+  emit('select', item.languageId, item.languageName)
 }
 
 function confirmSelected() {
-  if (selected.value) emit('select', selected.value)
+  const item = languageList.value.find(i => i.languageId === selected.value)
+  if (item) emit('select', item.languageId, item.languageName)
 }
 </script>
 

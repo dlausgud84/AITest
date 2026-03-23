@@ -1,5 +1,6 @@
 package com.dit.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,11 +16,28 @@ public class UserDomain {
     /* ── 기본 정보 ── */
     private String userId;              // USER_ID            (PK)
     private String userName;            // USER_NAME
-    private String password;            // PASSWORD
     private String departmentId;        // DEPARTMENT_ID
+    private String departmentName;      // NB_DEPARTMENTS 조인 결과
     private String changePasswordFlag;  // CHANGE_PASSWORD_FLAG (Y/N)
     private String defaultSiteId;       // DEFAULT_SITE_ID
+    private String siteName;            // NB_SITES 조인 결과
     private String defaultLanguageId;   // DEFAULT_LANGUAGE_ID
+    private String languageName;        // NB_LANGUAGES 조인 결과
+
+    /* ── 비밀번호 (응답 JSON에서 완전 제외) ── */
+    /**
+     * [🔒보안] 레거시 평문/구형 암호화 비밀번호 컬럼
+     * JSON 응답에 절대 노출되지 않도록 @JsonIgnore 적용
+     */
+    @JsonIgnore
+    private String password;            // PASSWORD (레거시 컬럼 — 직접 사용 지양)
+
+    /**
+     * [🔒보안] BCrypt 해시된 비밀번호
+     * JSON 응답에 절대 노출되지 않도록 @JsonIgnore 적용
+     */
+    @JsonIgnore
+    private String encodePassword;      // ENCODE_PASSWORD (BCrypt 해시)
 
     /* ── 연락처 ── */
     private String phoneOffice;         // PHONE_OFFICE
@@ -66,5 +84,4 @@ public class UserDomain {
     private String createDttm;          // CREATE_DTTM        (yyyyMMddHHmmss)
     private String modifierId;          // MODIFIER_ID
     private String modifyDttm;          // MODIFY_DTTM        (yyyyMMddHHmmss)
-    private String encodePassword;      // ENCODE_PASSWORD
 }

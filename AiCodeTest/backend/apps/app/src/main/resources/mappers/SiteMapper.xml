@@ -13,6 +13,7 @@
             SITE_ID   AS siteId,
             SITE_NAME AS siteName
         FROM NB_SITES
+        WHERE SITE_TYPE = '00'
         ORDER BY SITE_ID ASC
     </select>
 

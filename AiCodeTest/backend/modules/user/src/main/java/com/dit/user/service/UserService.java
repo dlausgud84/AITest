@@ -6,6 +6,9 @@ import com.dit.user.domain.UserDomain;
 import com.dit.user.dto.UserDto;
 import com.dit.user.dto.UserSearchDto;
 import com.dit.user.persistence.mapper.UserMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,20 +17,18 @@ import java.util.List;
 /**
  * 사용자 서비스 - 비즈니스 로직 및 트랜잭션 처리
  */
+@Slf4j
 @Service
-@Transactional
+@RequiredArgsConstructor
+@Transactional(readOnly = true) // 기본값: 읽기 전용 (쓰기 메서드는 @Transactional로 오버라이드)
 public class UserService {
 
     private final UserMapper userMapper;
-
-    public UserService(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
+    private final BCryptPasswordEncoder passwordEncoder;
 
     /**
      * 사용자 목록 조회
      */
-    @Transactional(readOnly = true)
     public List<UserDomain> getUserList(UserSearchDto searchDto) {
         return userMapper.selectUserList(searchDto);
     }
@@ -35,10 +36,10 @@ public class UserService {
     /**
      * 사용자 단건 조회
      */
-    @Transactional(readOnly = true)
     public UserDomain getUserById(String userId) {
         UserDomain user = userMapper.selectUserById(userId);
         if (user == null) {
+            log.warn("사용자 조회 실패 - 존재하지 않는 사용자: userId={}", userId);
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         return user;
@@ -46,61 +47,80 @@ public class UserService {
 
     /**
      * 사용자 등록
+     * [🔒보안] 비밀번호는 BCrypt 해싱 후 ENCODE_PASSWORD 컬럼에 저장 — 평문 저장 절대 금지
+     * [🔒보안] 로그에 비밀번호 절대 출력 금지
      */
+    @Transactional
     public void createUser(UserDto dto, String currentUserId) {
-        /* 필수 값 검증 */
-        if (dto.getUserId() == null || dto.getUserId().isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_USER_DATA, "사용자 ID는 필수입니다.");
-        }
+        log.info("사용자 등록 시작: userId={}, requestedBy={}", dto.getUserId(), currentUserId);
+
+        /* 사용자명 필수 검증 (UserDto에서 @NotBlank 제거 — 수정 시 optional이므로 여기서 수동 검증) */
         if (dto.getUserName() == null || dto.getUserName().isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_USER_DATA, "사용자명은 필수입니다.");
         }
+
+        /* 비밀번호 확인 일치 검증 */
         if (dto.getPassword() == null || dto.getPassword().isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_USER_DATA, "비밀번호는 필수입니다.");
         }
-
-        /* 비밀번호 확인 */
         if (!dto.getPassword().equals(dto.getPasswordConfirm())) {
             throw new BusinessException(ErrorCode.INVALID_USER_DATA, "비밀번호가 일치하지 않습니다.");
         }
 
         /* 중복 확인 */
         if (userMapper.countByUserId(dto.getUserId()) > 0) {
+            log.warn("사용자 등록 실패 - 중복 ID: userId={}", dto.getUserId());
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
         }
 
         UserDomain user = toUserDomain(dto);
         user.setCreatorId(currentUserId);
+
+        // [🔒보안] BCrypt 해싱 후 ENCODE_PASSWORD에 저장 — 평문 저장 금지
+        user.setEncodePassword(passwordEncoder.encode(dto.getPassword()));
+
         userMapper.insertUser(user);
+        log.info("사용자 등록 완료: userId={}", dto.getUserId());
     }
 
     /**
      * 사용자 수정
+     * [🔒보안] 비밀번호 변경 시 BCrypt 재해싱
      */
+    @Transactional
     public void updateUser(String userId, UserDto dto, String currentUserId) {
-        /* 존재 확인 - getUserById 재사용 (없으면 BusinessException 자동 발생) */
-        getUserById(userId);
+        log.info("사용자 수정 시작: userId={}, requestedBy={}", userId, currentUserId);
 
-        /* 비밀번호 변경 시 확인 */
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            if (!dto.getPassword().equals(dto.getPasswordConfirm())) {
-                throw new BusinessException(ErrorCode.INVALID_USER_DATA, "비밀번호가 일치하지 않습니다.");
-            }
-        }
+        /* 존재 확인 */
+        getUserById(userId);
 
         UserDomain user = toUserDomain(dto);
         user.setUserId(userId);
         user.setModifierId(currentUserId);
+
+        /* 비밀번호 변경 시 BCrypt 재해싱 */
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            if (!dto.getPassword().equals(dto.getPasswordConfirm())) {
+                throw new BusinessException(ErrorCode.INVALID_USER_DATA, "비밀번호가 일치하지 않습니다.");
+            }
+            // [🔒보안] 새 비밀번호 BCrypt 해싱
+            user.setEncodePassword(passwordEncoder.encode(dto.getPassword()));
+        }
+
         userMapper.updateUser(user);
+        log.info("사용자 수정 완료: userId={}", userId);
     }
 
     /**
      * 사용자 삭제
      */
+    @Transactional
     public void deleteUser(String userId) {
-        /* 존재 확인 - getUserById 재사용 (없으면 BusinessException 자동 발생) */
+        log.info("사용자 삭제 시작: userId={}", userId);
+        /* 존재 확인 */
         getUserById(userId);
         userMapper.deleteUser(userId);
+        log.info("사용자 삭제 완료: userId={}", userId);
     }
 
     /* ── DTO → Domain 변환 ── */
@@ -108,7 +128,6 @@ public class UserService {
         UserDomain u = new UserDomain();
         u.setUserId(dto.getUserId());
         u.setUserName(dto.getUserName());
-        u.setPassword(dto.getPassword());
         u.setChangePasswordFlag(dto.getChangePasswordFlag());
         u.setDepartmentId(dto.getDepartmentId());
         u.setDefaultSiteId(dto.getDefaultSiteId());

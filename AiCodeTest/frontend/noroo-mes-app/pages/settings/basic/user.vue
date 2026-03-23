@@ -21,7 +21,7 @@
           <span class="tb-icon"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5.5V10.5M5.5 8H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
           생성
         </button>
-        <button class="tb-btn tb-btn--update"  @click="handleUpdate" :disabled="selectedRow < 0">
+        <button class="tb-btn tb-btn--update"  @click="handleUpdate" :disabled="!isDefinitionChanged">
           <span class="tb-icon"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 2L14 5L5 14H2V11L11 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 4L12 7" stroke="currentColor" stroke-width="1.5"/></svg></span>
           수정
         </button>
@@ -109,9 +109,9 @@
                   <th class="col-check"><input type="checkbox" :checked="isAllChecked" @change="toggleAllCheck" /></th>
                   <th>사용자 ID</th>
                   <th>사용자명</th>
-                  <th>부서 ID</th>
-                  <th>기본 사이트 ID</th>
-                  <th>기본 언어 ID</th>
+                  <th>부서</th>
+                  <th>기본 사이트</th>
+                  <th>기본 언어</th>
                   <th>이메일</th>
                   <th>휴대폰</th>
                   <th>사무실 전화</th>
@@ -147,9 +147,9 @@
                   <td class="col-check"><input type="checkbox" v-model="row.checked" @click.stop /></td>
                   <td class="cell-bold">{{ row.userId }}</td>
                   <td>{{ row.userName }}</td>
-                  <td>{{ row.departmentId }}</td>
-                  <td>{{ row.defaultSiteId }}</td>
-                  <td>{{ row.defaultLanguageId }}</td>
+                  <td>{{ row.departmentName }}</td>
+                  <td>{{ row.siteName }}</td>
+                  <td>{{ row.languageName }}</td>
                   <td>{{ row.emailId }}</td>
                   <td>{{ row.phoneMobile }}</td>
                   <td>{{ row.phoneOffice }}</td>
@@ -225,35 +225,42 @@
                   </div>
                   <div class="fg-row">
                     <label class="fg-label required">비밀번호</label>
-                    <input v-model="form.password"        type="password" class="fg-input fg-input--req" />
+                    <input v-model="form.password"        type="password"
+                           :readonly="form.changePasswordFlag !== 'Y'"
+                           :class="['fg-input', form.changePasswordFlag === 'Y' ? 'fg-input--req' : 'fg-input--readonly']" />
                     <label class="fg-label required">비밀번호 확인</label>
-                    <input v-model="form.passwordConfirm" type="password" class="fg-input fg-input--req" />
+                    <input v-model="form.passwordConfirm" type="password"
+                           :readonly="form.changePasswordFlag !== 'Y'"
+                           :class="['fg-input', form.changePasswordFlag === 'Y' ? 'fg-input--req' : 'fg-input--readonly']" />
                   </div>
                   <div class="fg-row">
                     <label class="fg-label"></label>
                     <div class="fg-checkbox-cell">
                       <label class="fg-checkbox">
                         <input type="checkbox" :checked="form.changePasswordFlag === 'Y'"
-                          @change="form.changePasswordFlag = ($event.target as HTMLInputElement).checked ? 'Y' : 'N'" />
+                          @change="onChangePasswordFlag" />
                         <span>비밀번호 변경 여부</span>
                       </label>
                     </div>
-                    <label class="fg-label">부서 ID</label>
+                    <label class="fg-label">부서</label>
                     <div class="fg-input-row">
-                      <input v-model="form.departmentId" class="fg-input fg-input--readonly" readonly />
-                      <button class="fg-more">···</button>
+                      <input v-model="form.departmentId"   class="fg-input fg-input--readonly fg-input--code" readonly placeholder="CODE" />
+                      <input v-model="form.departmentName" class="fg-input fg-input--readonly" readonly placeholder="NAME" />
+                      <button class="fg-more" @click="showDeptPicker = true">···</button>
                     </div>
                   </div>
                   <div class="fg-row">
-                    <label class="fg-label">기본 언어 ID</label>
+                    <label class="fg-label">기본 언어</label>
                     <div class="fg-input-row">
-                      <input v-model="form.defaultLanguageId" class="fg-input fg-input--readonly" readonly />
+                      <input v-model="form.defaultLanguageId"   class="fg-input fg-input--readonly fg-input--code" readonly placeholder="CODE" />
+                      <input v-model="form.defaultLanguageName" class="fg-input fg-input--readonly" readonly placeholder="NAME" />
                       <button class="fg-more" @click="showLanguagePicker = true">···</button>
                     </div>
-                    <label class="fg-label required">기본 사이트 ID</label>
+                    <label class="fg-label required">기본 사이트</label>
                     <div class="fg-input-row">
-                      <input v-model="form.defaultSiteId" class="fg-input fg-input--req fg-input--readonly" readonly />
-                      <button class="fg-more">···</button>
+                      <input v-model="form.defaultSiteId"   class="fg-input fg-input--req fg-input--readonly fg-input--code" readonly placeholder="CODE" />
+                      <input v-model="form.defaultSiteName" class="fg-input fg-input--readonly" readonly placeholder="NAME" />
+                      <button class="fg-more" @click="showSitePicker = true">···</button>
                     </div>
                   </div>
                 </div>
@@ -283,29 +290,42 @@
               <!-- 추가된 사이트 권한 / 이동 버튼 / 사이트 권한 -->
               <div class="site-layout">
 
-                <!-- 추가된 사이트 권한 -->
+                <!-- 추가된 사이트 권한 (NB_USER_ROLES) -->
                 <div class="site-grid-wrap">
                   <div class="site-grid-title">추가된 사이트 권한</div>
                   <div class="site-grid-scroll">
                     <table class="site-grid">
                       <thead>
                         <tr>
-                          <th>사이트 ID</th>
-                          <th>권한 ID</th>
+                          <th class="col-chk">
+                            <input
+                              type="checkbox"
+                              :checked="isAllAddedChecked"
+                              :indeterminate="isIndeterminateAdded"
+                              @change="toggleAllAdded"
+                            />
+                          </th>
+                          <th>사용자명</th>
                           <th>권한명</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-if="addedRoles.length === 0">
+                        <tr v-if="userRoleList.length === 0">
                           <td colspan="3" class="grid-empty"></td>
                         </tr>
                         <tr
-                          v-for="(r, i) in addedRoles" :key="i"
+                          v-for="(r, i) in userRoleList" :key="i"
                           :class="{ 'row-selected': selectedAdded === i }"
                           @click="selectedAdded = i"
                         >
-                          <td>{{ r.siteId }}</td>
-                          <td>{{ r.roleId }}</td>
+                          <td class="col-chk" @click.stop>
+                            <input
+                              type="checkbox"
+                              :checked="checkedAdded.has(i)"
+                              @change="toggleAdded(i)"
+                            />
+                          </td>
+                          <td>{{ r.userName }}</td>
                           <td>{{ r.roleName }}</td>
                         </tr>
                       </tbody>
@@ -313,33 +333,48 @@
                   </div>
                 </div>
 
-                <!-- 이동 버튼 -->
+                <!-- 이동 버튼 (TODO: 권한 추가/제거 API 연동) -->
                 <div class="transfer-btns">
-                  <button class="xfer-btn" @click="transferToAdded"  title="추가된 사이트 권한으로 이동">&lt;</button>
-                  <button class="xfer-btn" @click="transferToSite"   title="사이트 권한으로 이동">&gt;</button>
+                  <button class="xfer-btn" disabled title="추가된 사이트 권한으로 이동">&lt;</button>
+                  <button class="xfer-btn" disabled title="사이트 권한으로 이동">&gt;</button>
                 </div>
 
-                <!-- 사이트 권한 -->
+                <!-- 사이트 권한 (NB_ROLES) -->
                 <div class="site-grid-wrap">
                   <div class="site-grid-title">사이트 권한</div>
                   <div class="site-grid-scroll">
                     <table class="site-grid">
                       <thead>
                         <tr>
-                          <th>사이트 ID</th>
+                          <th class="col-chk">
+                            <input
+                              type="checkbox"
+                              :checked="isAllSiteChecked"
+                              :indeterminate="isIndeterminateSite"
+                              @change="toggleAllSite"
+                            />
+                          </th>
+                          <th>사이트</th>
                           <th>권한 ID</th>
                           <th>권한명</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-if="siteRoles.length === 0">
-                          <td colspan="3" class="grid-empty"></td>
+                        <tr v-if="roleList.length === 0">
+                          <td colspan="4" class="grid-empty"></td>
                         </tr>
                         <tr
-                          v-for="(r, i) in siteRoles" :key="i"
+                          v-for="(r, i) in roleList" :key="i"
                           :class="{ 'row-selected': selectedSite === i }"
                           @click="selectedSite = i"
                         >
+                          <td class="col-chk" @click.stop>
+                            <input
+                              type="checkbox"
+                              :checked="checkedSite.has(i)"
+                              @change="toggleSite(i)"
+                            />
+                          </td>
                           <td>{{ r.siteId }}</td>
                           <td>{{ r.roleId }}</td>
                           <td>{{ r.roleName }}</td>
@@ -464,6 +499,21 @@
       @close="showLanguagePicker = false"
     />
 
+    <!-- ══ 사이트 선택 팝업 ══ -->
+    <SitePickerPopup
+      v-if="showSitePicker"
+      @select="onSiteSelect"
+      @close="showSitePicker = false"
+    />
+
+    <!-- ══ 부서 선택 팝업 ══ -->
+    <DepartmentPickerPopup
+      v-if="showDeptPicker"
+      :site-id="form.defaultSiteId"
+      @select="onDeptSelect"
+      @close="showDeptPicker = false"
+    />
+
   </div>
 </template>
 
@@ -473,7 +523,7 @@ import type { UserRow, UserSaveDto } from '~/composables/useUserAPI'
 const router = useRouter()
 
 /* ── API composable ── */
-const { userList, isLoading, errorMsg, fetchUserList, createUser, updateUser, deleteUser } = useUserAPI()
+const { userList, isLoading, errorMsg, fetchUserList, updateUser, deleteUser } = useUserAPI()
 
 /* ── 사이트 목록 (콤보박스용) ── */
 const { siteList, fetchSiteList } = useSiteAPI()
@@ -481,9 +531,31 @@ onMounted(fetchSiteList)
 
 /* ── 언어 선택 팝업 ── */
 const showLanguagePicker = ref(false)
-function onLanguageSelect(languageId: string) {
-  form.defaultLanguageId = languageId
+function onLanguageSelect(languageId: string, languageName: string) {
+  form.defaultLanguageId   = languageId
+  form.defaultLanguageName = languageName
   showLanguagePicker.value = false
+}
+
+/* ── 사이트 선택 팝업 ── */
+const showSitePicker = ref(false)
+function onSiteSelect(siteId: string, siteName: string) {
+  // 사이트가 변경되면 부서 초기화 (부서는 사이트 기준으로 종속됨)
+  if (form.defaultSiteId !== siteId) {
+    form.departmentId   = null
+    form.departmentName = null
+  }
+  form.defaultSiteId   = siteId
+  form.defaultSiteName = siteName
+  showSitePicker.value = false
+}
+
+/* ── 부서 선택 팝업 ── */
+const showDeptPicker = ref(false)
+function onDeptSelect(departmentId: string, departmentName: string) {
+  form.departmentId   = departmentId
+  form.departmentName = departmentName
+  showDeptPicker.value = false
 }
 
 /* ── 탭 ── */
@@ -526,15 +598,30 @@ function toggleAllCheck(e: Event) {
 function selectRow(i: number, row: UserRow) {
   selectedRow.value = i
   /* 사용자 정의 탭 폼 채우기 */
+  const deptId   = toNull(row.departmentId)
+  const langId   = toNull(row.defaultLanguageId)
+  const siteId   = toNull(row.defaultSiteId)
+  const cpFlag   = row.changePasswordFlag ?? ''
   Object.assign(form, {
     userId:             row.userId,
     userName:           row.userName,
     password:           '',
     passwordConfirm:    '',
-    changePasswordFlag: row.changePasswordFlag ?? '',
-    departmentId:       row.departmentId       ?? '',
-    defaultLanguageId:  row.defaultLanguageId  ?? '',
-    defaultSiteId:      row.defaultSiteId      ?? '',
+    changePasswordFlag:  cpFlag,
+    departmentId:        deptId,
+    departmentName:      deptId  ? toNull(row.departmentName) : null,
+    defaultLanguageId:   langId,
+    defaultLanguageName: langId  ? toNull(row.languageName)   : null,
+    defaultSiteId:       siteId,
+    defaultSiteName:     siteId  ? toNull(row.siteName)       : null,
+  })
+  /* 수정 버튼 활성화 기준 스냅샷 저장 */
+  Object.assign(snapshot, {
+    userName:           row.userName,
+    changePasswordFlag: cpFlag,
+    departmentId:       deptId,
+    defaultLanguageId:  langId,
+    defaultSiteId:      siteId,
   })
   /* 상세 정보 탭 폼 채우기 */
   Object.assign(detail, {
@@ -561,6 +648,8 @@ function selectRow(i: number, row: UserRow) {
   userGroup.userGroup8  = row.userGroup8  ?? ''
   userGroup.userGroup9  = row.userGroup9  ?? ''
   userGroup.userGroup10 = row.userGroup10 ?? ''
+  /* 사이트 권한 / 추가된 사이트 권한 그리드 조회 */
+  loadRoleGrids(siteId, row.userId)
 }
 
 function goPage(p: number) {
@@ -568,30 +657,122 @@ function goPage(p: number) {
 }
 
 /* ── 폼 (사용자 정의 탭) ── */
-const form = reactive({
+/** 빈 문자열·공백·null·undefined → null, 나머지는 trim 후 반환 */
+const toNull = (v: string | null | undefined): string | null =>
+  (v == null || v.trim() === '') ? null : v.trim()
+
+const form = reactive<{
+  userId: string; userName: string; password: string; passwordConfirm: string
+  changePasswordFlag: string
+  departmentId: string | null; departmentName: string | null
+  defaultLanguageId: string | null; defaultLanguageName: string | null
+  defaultSiteId: string | null; defaultSiteName: string | null
+}>({
   userId: '', userName: '', password: '', passwordConfirm: '',
-  changePasswordFlag: '', departmentId: '', defaultLanguageId: '',
-  defaultSiteId: '',
+  changePasswordFlag: '',
+  departmentId: null, departmentName: null,
+  defaultLanguageId: null, defaultLanguageName: null,
+  defaultSiteId: null, defaultSiteName: null,
+})
+
+/* ── 수정 버튼 활성화 감지용 스냅샷 (행 선택 시 원본값 저장) ── */
+const snapshot = reactive<{
+  userName: string
+  changePasswordFlag: string
+  departmentId: string | null
+  defaultLanguageId: string | null
+  defaultSiteId: string | null
+}>({
+  userName: '',
+  changePasswordFlag: '',
+  departmentId: null,
+  defaultLanguageId: null,
+  defaultSiteId: null,
+})
+
+/** 사용자 정의 탭의 5개 필드 중 하나라도 원본과 달라지면 true */
+const isDefinitionChanged = computed(() => {
+  if (selectedRow.value < 0) return false
+  return (
+    form.userName           !== snapshot.userName           ||
+    form.changePasswordFlag !== snapshot.changePasswordFlag ||
+    form.departmentId       !== snapshot.departmentId       ||
+    form.defaultLanguageId  !== snapshot.defaultLanguageId  ||
+    form.defaultSiteId      !== snapshot.defaultSiteId
+  )
 })
 
 /* ── 사이트 권한 이중 그리드 ── */
-interface SiteRole { siteId: string; roleId: string; roleName: string }
-const addedRoles    = ref<SiteRole[]>([])
-const siteRoles     = ref<SiteRole[]>([])
+const { roleList,     fetchRoleList }     = useRoleAPI()
+const { userRoleList, fetchUserRoleList } = useUserRoleAPI()
+
 const selectedAdded = ref(-1)
 const selectedSite  = ref(-1)
 
-function transferToAdded() {
-  if (selectedSite.value < 0) return
-  const item = siteRoles.value.splice(selectedSite.value, 1)[0]
-  addedRoles.value.push(item)
-  selectedSite.value = -1
+/* ── 멀티 셀렉트 체크박스 (추가된 사이트 권한) ── */
+const checkedAdded = ref<Set<number>>(new Set())
+
+const isAllAddedChecked = computed(() =>
+  userRoleList.value.length > 0 && checkedAdded.value.size === userRoleList.value.length
+)
+const isIndeterminateAdded = computed(() =>
+  checkedAdded.value.size > 0 && checkedAdded.value.size < userRoleList.value.length
+)
+
+function toggleAllAdded(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  checkedAdded.value = checked
+    ? new Set(userRoleList.value.map((_, i) => i))
+    : new Set()
 }
-function transferToSite() {
-  if (selectedAdded.value < 0) return
-  const item = addedRoles.value.splice(selectedAdded.value, 1)[0]
-  siteRoles.value.push(item)
+function toggleAdded(i: number) {
+  const next = new Set(checkedAdded.value)
+  next.has(i) ? next.delete(i) : next.add(i)
+  checkedAdded.value = next
+}
+
+/* ── 멀티 셀렉트 체크박스 (사이트 권한) ── */
+const checkedSite = ref<Set<number>>(new Set())
+
+const isAllSiteChecked = computed(() =>
+  roleList.value.length > 0 && checkedSite.value.size === roleList.value.length
+)
+const isIndeterminateSite = computed(() =>
+  checkedSite.value.size > 0 && checkedSite.value.size < roleList.value.length
+)
+
+function toggleAllSite(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  checkedSite.value = checked
+    ? new Set(roleList.value.map((_, i) => i))
+    : new Set()
+}
+function toggleSite(i: number) {
+  const next = new Set(checkedSite.value)
+  next.has(i) ? next.delete(i) : next.add(i)
+  checkedSite.value = next
+}
+
+/** 행 선택 시 사이트 권한 / 추가된 사이트 권한 그리드 조회 */
+async function loadRoleGrids(siteId: string | null, userId: string) {
   selectedAdded.value = -1
+  selectedSite.value  = -1
+  checkedAdded.value  = new Set()
+  checkedSite.value   = new Set()
+  await Promise.all([
+    fetchRoleList(siteId),
+    fetchUserRoleList(siteId, userId),
+  ])
+}
+
+/** 조회/생성 시 그리드 초기화 */
+function clearRoleGrids() {
+  selectedAdded.value = -1
+  selectedSite.value  = -1
+  checkedAdded.value  = new Set()
+  checkedSite.value   = new Set()
+  roleList.value     = []
+  userRoleList.value = []
 }
 
 /* ── 사용자 상세 정보 탭 폼 ── */
@@ -623,17 +804,32 @@ const userGroup = reactive<Record<GroupKey, string>>({
 
 function openGroupBrowse(_key: GroupKey) { /* TODO: 검색 팝업 연동 */ }
 
-/* ── 폼 → DTO 변환 ── */
+/* ── 폼 → DTO 변환 (변경된 필드만 포함) ── */
 function buildDto(): UserSaveDto {
+  const nameChanged = form.userName           !== snapshot.userName
+  const deptChanged = form.departmentId       !== snapshot.departmentId
+  const langChanged = form.defaultLanguageId  !== snapshot.defaultLanguageId
+  const siteChanged = form.defaultSiteId      !== snapshot.defaultSiteId
+
   return {
-    userId:             form.userId,
-    userName:           form.userName,
-    password:           form.password           || undefined,
-    passwordConfirm:    form.passwordConfirm    || undefined,
+    userId: form.userId,
+
+    // 변경된 경우만 포함 — undefined 전송 시 백엔드 UPDATE에서 해당 컬럼 건너뜀
+    userName:           nameChanged ? (form.userName || undefined) : undefined,
+
+    // 비밀번호: 변경 여부 체크 + 값 있을 때만 전송
+    password:           form.changePasswordFlag === 'Y' ? (form.passwordConfirm || undefined) : undefined,
+    passwordConfirm:    form.changePasswordFlag === 'Y' ? (form.passwordConfirm || undefined) : undefined,
     changePasswordFlag: form.changePasswordFlag || undefined,
-    departmentId:       form.departmentId       || undefined,
-    defaultLanguageId:  form.defaultLanguageId  || undefined,
-    defaultSiteId:      form.defaultSiteId      || undefined,
+
+    // 부서: null(사이트 변경 시 초기화) → 빈 문자열로 변환하여 백엔드에 "NULL 처리" 신호 전달
+    departmentId:       deptChanged ? (form.departmentId ?? '') : undefined,
+
+    // 기본 언어 / 기본 사이트: 변경된 경우만 포함
+    defaultLanguageId:  langChanged ? (form.defaultLanguageId  || undefined) : undefined,
+    defaultSiteId:      siteChanged ? (form.defaultSiteId      || undefined) : undefined,
+
+    // 다른 탭 데이터는 항상 포함 (탭 전환 없이도 DB 값 유지)
     phoneOffice:        detail.phoneOffice    || undefined,
     phoneMobile:        detail.phoneMobile    || undefined,
     phoneHome:          detail.phoneHome      || undefined,
@@ -662,6 +858,8 @@ function buildDto(): UserSaveDto {
 async function handleSearch() {
   selectedRow.value = -1
   page.value = 1
+  Object.assign(snapshot, { userName: '', changePasswordFlag: '', departmentId: null, defaultLanguageId: null, defaultSiteId: null })
+  clearRoleGrids()
   await fetchUserList({
     includeDeleted: filter.includeDeleted,
     siteId:         filter.siteId || undefined,
@@ -671,9 +869,14 @@ async function handleSearch() {
 
 function handleCreate() {
   selectedRow.value = -1
+  Object.assign(snapshot, { userName: '', changePasswordFlag: '', departmentId: null, defaultLanguageId: null, defaultSiteId: null })
+  clearRoleGrids()
   Object.assign(form, {
     userId: '', userName: '', password: '', passwordConfirm: '',
-    changePasswordFlag: '', departmentId: '', defaultLanguageId: '', defaultSiteId: '',
+    changePasswordFlag: '',
+    departmentId: null, departmentName: null,
+    defaultLanguageId: null, defaultLanguageName: null,
+    defaultSiteId: null, defaultSiteName: null,
   })
   Object.assign(detail, {
     sexFlag: '', emailId: '', phoneOffice: '', phoneMobile: '',
@@ -686,8 +889,30 @@ function handleCreate() {
   })
 }
 
+/* ── 비밀번호 변경 여부 체크박스 핸들러 ── */
+function onChangePasswordFlag(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  form.changePasswordFlag = checked ? 'Y' : 'N'
+  // 체크 해제 시 비밀번호 필드 초기화
+  if (!checked) {
+    form.password = ''
+    form.passwordConfirm = ''
+  }
+}
+
 async function handleUpdate() {
   if (selectedRow.value < 0) return
+  // 비밀번호 변경 여부가 체크된 경우에만 비밀번호 유효성 검사
+  if (form.changePasswordFlag === 'Y') {
+    if (!form.password || !form.passwordConfirm) {
+      alert('비밀번호와 비밀번호 확인을 입력해주세요.')
+      return
+    }
+    if (form.password !== form.passwordConfirm) {
+      alert('비밀번호와 비밀번호 확인이 일치하지 않습니다.')
+      return
+    }
+  }
   const ok = await updateUser(form.userId, buildDto())
   if (ok) await handleSearch()
   else alert(errorMsg.value)
@@ -1146,6 +1371,7 @@ function handleKeydown(e: KeyboardEvent) {
 .fg-input--readonly:focus { border-color: var(--border-color); box-shadow: none; }
 .fg-input-row { display: flex; gap: 4px; }
 .fg-input-row .fg-input { flex: 1; }
+.fg-input-row .fg-input--code { flex: 0 0 90px; width: 90px; }
 .fg-more {
   height: 30px;
   padding: 0 9px;
@@ -1297,6 +1523,8 @@ function handleKeydown(e: KeyboardEvent) {
 }
 .site-grid tbody tr:hover { background: var(--nav-hover-bg); cursor: pointer; }
 .site-grid tbody tr.row-selected { background: rgba(108,143,255,0.1); box-shadow: inset 2px 0 0 var(--accent); }
+.site-grid .col-chk { width: 28px; min-width: 28px; text-align: center; padding: 0; }
+.site-grid .col-chk input[type="checkbox"] { cursor: pointer; }
 
 /* 이동 버튼 */
 .transfer-btns {

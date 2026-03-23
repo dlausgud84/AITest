@@ -1,16 +1,16 @@
 spring:
   datasource:
     # Microsoft SQL Server 개발 환경 연결
-    # trustServerCertificate=true: 자체 서명 인증서 허용
-    url: jdbc:sqlserver://192.168.1.222:1433;databaseName=MESDB_MYLEE;encrypt=true;trustServerCertificate=true
-    username: mesadmin
-    password: spdh!@#$5678
+    # trustServerCertificate=true: 자체 서명 인증서 허용 (개발 환경 전용 — 운영 환경에는 절대 사용 금지)
+    # [🔒보안] DB 비밀번호는 환경변수로 관리합니다.
+    #   Windows: set DEV_DB_USERNAME=mesadmin && set DEV_DB_PASSWORD=your_password
+    #   Linux/Mac: export DEV_DB_USERNAME=mesadmin && export DEV_DB_PASSWORD=your_password
+    #   IntelliJ: Run > Edit Configurations > Environment Variables에서 설정
+    url: jdbc:sqlserver://${DEV_DB_HOST:192.168.1.222}:1433;databaseName=${DEV_DB_NAME:MESDB_MYLEE};encrypt=true;trustServerCertificate=true
+    username: ${DEV_DB_USERNAME:mesadmin}
+    # [🔒보안] 운영 배포 시 반드시 환경변수로 주입 — 개발 기본값은 로컬 개발 전용
+    password: ${DEV_DB_PASSWORD:spdh!@#$5678}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
-
 logging:
   level:
     root: INFO

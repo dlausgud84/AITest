@@ -25,6 +25,17 @@ server:
   servlet:
     context-path: /
 
+# Spring Actuator 보안 설정
+# [🔒보안] 운영 환경에서 민감한 엔드포인트가 외부에 노출되지 않도록 health만 허용
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never    # 운영 환경에서는 상세 DB/디스크 정보 숨김
+
 # MES 서버 연동 정보 (참고용)
 mes:
   server:

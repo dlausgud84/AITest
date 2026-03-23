@@ -1,8 +1,9 @@
 @echo off
+chcp 65001 > nul
 cd /d "%~dp0"
 
 echo Stopping existing dev server instances...
-powershell -NoProfile -Command "$t=@('AiCodeTest MES Dev Server','Backend  - Spring Boot 8080','Frontend - Nuxt 3000'); Get-Process -Name cmd -ErrorAction SilentlyContinue | Where-Object { $t -contains $_.MainWindowTitle } | ForEach-Object { taskkill /F /T /PID $_.Id 2>$null }"
+powershell -NoProfile -Command "$t=@('AiCodeTest MES Dev Server','Backend  - Spring Boot 8080','Frontend - Nuxt 3000'); Get-Process -Name cmd -ErrorAction SilentlyContinue | Where-Object { $t -contains $_.MainWindowTitle } | ForEach-Object { taskkill /F /T /PID $_.Id 2>nul }"
 timeout /t 1 /nobreak > nul
 
 title AiCodeTest MES Dev Server
@@ -23,12 +24,12 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000 " ^| findstr LISTENING
 timeout /t 2 /nobreak > nul
 
 echo [1/2] Backend  : http://localhost:8080
-start "Backend  - Spring Boot 8080" cmd /k "cd backend && gradlew.bat :apps:app:bootRun"
+start "Backend  - Spring Boot 8080" cmd /k "chcp 65001 > nul && cd backend && set JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 && gradlew.bat :apps:app:bootRun"
 
 timeout /t 3 /nobreak > nul
 
 echo [2/2] Frontend : http://localhost:3000
-start "Frontend - Nuxt 3000" cmd /k "cd frontend\noroo-mes-app && npm run dev"
+start "Frontend - Nuxt 3000" cmd /k "chcp 65001 > nul && cd frontend\noroo-mes-app && npm run dev"
 
 echo.
 echo ============================================

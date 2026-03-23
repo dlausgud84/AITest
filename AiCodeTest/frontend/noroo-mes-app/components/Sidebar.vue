@@ -222,17 +222,20 @@ const openSubgroups = reactive<Record<string, boolean>>({
   dataManagement:     false,
 })
 
-/* 현재 경로가 설정 하위이면 자동 펼침 (사이드바 접힘 여부와 무관) */
-watchEffect(() => {
-  if (route.path.startsWith('/settings')) {
+/* 현재 경로가 설정 하위이면 자동 펼침
+   - 사이드바가 펼쳐진 상태(isCollapsed = false)일 때만 동작
+   - 리프 메뉴 클릭 시: collapse()로 이미 isCollapsed = true이므로 자동으로 건너뜀 */
+watch(() => route.path, (newPath) => {
+  if (isCollapsed.value) return   // 접힌 상태면 메뉴 열지 않음
+  if (newPath.startsWith('/settings')) {
     openGroups.settings = true
-    if      (route.path.startsWith('/settings/basic'))     openSubgroups.basicSettings       = true
-    else if (route.path.startsWith('/settings/process'))   openSubgroups.processManagement   = true
-    else if (route.path.startsWith('/settings/document'))  openSubgroups.documentControl     = true
-    else if (route.path.startsWith('/settings/equipment')) openSubgroups.equipmentManagement = true
-    else if (route.path.startsWith('/settings/data'))      openSubgroups.dataManagement      = true
+    if      (newPath.startsWith('/settings/basic'))     openSubgroups.basicSettings       = true
+    else if (newPath.startsWith('/settings/process'))   openSubgroups.processManagement   = true
+    else if (newPath.startsWith('/settings/document'))  openSubgroups.documentControl     = true
+    else if (newPath.startsWith('/settings/equipment')) openSubgroups.equipmentManagement = true
+    else if (newPath.startsWith('/settings/data'))      openSubgroups.dataManagement      = true
   }
-})
+}, { immediate: true })
 
 /* ── 그룹 헤더 클릭
      - 접힌 상태: 사이드바 펼치기 + 해당 그룹 열기
@@ -254,9 +257,13 @@ const handleSubgroupHeaderClick = (key: string) => {
   }
 }
 
-/* 리프(최종 목적지) 메뉴 클릭 → 페이지 이동 후 사이드바 자동 접기 */
+/* 리프(최종 목적지) 메뉴 클릭 → 사이드바 + 열린 메뉴 그룹 모두 접기
+   collapse()가 먼저 실행되어 isCollapsed = true 가 된 뒤
+   watch가 돌더라도 isCollapsed.value 체크로 자동 차단됨 */
 const handleLeafClick = () => {
   collapse()
+  openGroups.settings = false
+  Object.keys(openSubgroups).forEach(key => { openSubgroups[key] = false })
 }
 
 /* ── 로그아웃 ── */

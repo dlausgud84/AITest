@@ -14,6 +14,11 @@
 | 토글 그룹 | `BaseToggleGroup.vue` | `count` — 토글 개수로 그룹 자동 생성 |
 | 콤보박스 | `BaseComboBox.vue` | `isMultiple` — 다중 선택 |
 | 셀렉트박스 | `BaseSelectBox.vue` | `isMultiple` + `selectFirstByDefault` — 다중 선택, 첫 번째 값 자동 선택 |
+| 체크박스 | `BaseCheckBox.vue` | `isIndeterminate` — 부분 선택 상태, 그룹(배열) v-model 지원 |
+| 라디오 그룹 | `BaseRadioGroup.vue` | `options` — 라디오 버튼 목록, 단일 값 선택 |
+| 텍스트에어리어 | `BaseTextArea.vue` | `rows` + `maxLength` — 줄 수, 글자 수 제한 |
+| 날짜 선택기 | `BaseDatePicker.vue` | `min` + `max` — 선택 가능 날짜 범위 제한 |
+| 숫자 입력 | `BaseNumberInput.vue` | `useComma` + `suffix` — 천 단위 콤마, 단위 표시 |
 
 ---
 
@@ -25,7 +30,12 @@ components/
     ├── BaseTextBox.vue         ← 텍스트박스
     ├── BaseToggleGroup.vue     ← 토글 그룹
     ├── BaseComboBox.vue        ← 콤보박스 (타이핑 검색 + 드롭다운)
-    └── BaseSelectBox.vue       ← 셀렉트박스
+    ├── BaseSelectBox.vue       ← 셀렉트박스
+    ├── BaseCheckBox.vue        ← 체크박스 (단일/그룹)
+    ├── BaseRadioGroup.vue      ← 라디오 그룹
+    ├── BaseTextArea.vue        ← 텍스트에어리어
+    ├── BaseDatePicker.vue      ← 날짜 선택기
+    └── BaseNumberInput.vue     ← 숫자 입력 (콤마 포맷, 단위)
 
 types/
 └── form.ts                     ← 공통 타입 정의
@@ -1538,21 +1548,1311 @@ watch(
 
 ---
 
-## 8. 실제 MES 페이지 적용 예시 (검색 조건 영역)
+## 8. BaseCheckBox — 체크박스
+
+### 핵심 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `isIndeterminate=true` | 부분 선택 상태 (- 아이콘 표시, 그룹 헤더 체크박스에 활용) |
+| `value` prop + `String[]` v-model | 그룹 사용 — 배열에 value를 추가/제거 |
+
+### 단일 vs 그룹 동작
+
+```
+단일 체크박스 (v-model: boolean):
+  ☑ 사용 여부       → model = true / false
+
+그룹 체크박스 (v-model: string[]):
+  ☑ 가동            value="run"    → model = ['run', ...]
+  ☐ 중지            value="stop"
+  ☑ 점검            value="check"  → model = ['run', 'check']
+
+isIndeterminate=true:
+  ⊟ 전체 선택       → 일부만 선택된 헤더 체크박스 표시
+```
+
+### Props 목록
+
+| Prop | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `modelValue` | `Boolean\|String[]` | `false` | v-model 값 (단일: boolean, 그룹: string[]) |
+| `value` | `String` | `undefined` | 그룹 사용 시 이 체크박스의 고유 값 |
+| `label` | `String` | `undefined` | 체크박스 우측 레이블 |
+| `size` | `String` | `'md'` | sm / md / lg |
+| `isDisabled` | `Boolean` | `false` | 비활성화 |
+| `isIndeterminate` | `Boolean` | `false` | 부분 선택 상태 표시 |
+
+### 컴포넌트 코드
+
+```vue
+<!-- components/base/BaseCheckBox.vue -->
+<template>
+  <label :class="wrapperClasses">
+
+    <!-- 숨겨진 네이티브 체크박스 (접근성 유지) -->
+    <input
+      :id="checkId"
+      type="checkbox"
+      :checked="isChecked"
+      :disabled="isDisabled"
+      :aria-label="label"
+      :aria-checked="isIndeterminate ? 'mixed' : isChecked"
+      class="checkbox__native"
+      @change="handleChange"
+    />
+
+    <!-- 커스텀 박스 아이콘 -->
+    <span class="checkbox__box" :class="boxClasses" aria-hidden="true">
+      <!-- 부분 선택 (indeterminate) -->
+      <svg v-if="isIndeterminate" width="10" height="2" viewBox="0 0 10 2">
+        <rect width="10" height="2" rx="1" fill="currentColor"/>
+      </svg>
+      <!-- 선택됨 체크 아이콘 -->
+      <svg v-else-if="isChecked" width="10" height="8" viewBox="0 0 10 8">
+        <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </span>
+
+    <!-- 레이블 -->
+    <span v-if="label" class="checkbox__label">{{ label }}</span>
+
+  </label>
+</template>
+
+<script setup lang="ts">
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseCheckBox' })
+
+import type { FormSize } from '~/types/form'
+
+// ─── Props ────────────────────────────────────────────────────────────────
+interface Props {
+  value?:           string    // 그룹 사용 시 이 체크박스의 식별 값
+  label?:           string
+  size?:            FormSize
+  isDisabled?:      boolean
+  isIndeterminate?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  size:             'md',
+  isDisabled:       false,
+  isIndeterminate:  false,
+})
+
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+// 단일: boolean, 그룹: string[]
+const model = defineModel<boolean | string[]>({ default: false })
+
+// ─── useId (Vue 3.5+) — SSR 안전한 고유 ID ───────────────────────────────
+const checkId = useId()
+
+// ─── Computed ─────────────────────────────────────────────────────────────
+const isChecked = computed((): boolean => {
+  if (Array.isArray(model.value)) {
+    // 그룹 모드: value prop이 배열에 포함되어 있는지 확인
+    return props.value !== undefined && model.value.includes(props.value)
+  }
+  return model.value === true
+})
+
+const wrapperClasses = computed(() => [
+  'checkbox',
+  `checkbox--${props.size}`,
+  {
+    'checkbox--checked':       isChecked.value,
+    'checkbox--indeterminate': props.isIndeterminate,
+    'checkbox--disabled':      props.isDisabled,
+  }
+])
+
+const boxClasses = computed(() => ({
+  'checkbox__box--checked':       isChecked.value,
+  'checkbox__box--indeterminate': props.isIndeterminate,
+}))
+
+// ─── Methods ──────────────────────────────────────────────────────────────
+const handleChange = (event: Event) => {
+  const checked = (event.target as HTMLInputElement).checked
+
+  if (Array.isArray(model.value)) {
+    // 그룹 모드: 배열에서 value 추가/제거
+    const current = [...model.value]
+    if (checked && props.value !== undefined) {
+      current.push(props.value)
+    } else if (!checked && props.value !== undefined) {
+      const idx = current.indexOf(props.value)
+      if (idx >= 0) current.splice(idx, 1)
+    }
+    model.value = current
+  } else {
+    // 단일 모드: boolean 토글
+    model.value = checked
+  }
+}
+</script>
+
+<style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
+/* ── 래퍼 (label 태그) ── */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+}
+
+.checkbox--disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+/* ── 네이티브 input 숨김 (접근성 유지) ── */
+.checkbox__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* ── 커스텀 박스 ── */
+.checkbox__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: 3px;
+  background: #fff;
+  color: #fff;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+/* 크기 */
+.checkbox--sm .checkbox__box { width: 14px; height: 14px; }
+.checkbox--md .checkbox__box { width: 16px; height: 16px; }
+.checkbox--lg .checkbox__box { width: 20px; height: 20px; }
+
+/* 선택된 상태 */
+.checkbox__box--checked,
+.checkbox__box--indeterminate {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* 포커스 표시 (키보드 접근성) */
+.checkbox__native:focus-visible + .checkbox__box {
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* ── 레이블 ── */
+.checkbox--sm .checkbox__label { font-size: 12px; color: #444; }
+.checkbox--md .checkbox__label { font-size: 14px; color: #444; }
+.checkbox--lg .checkbox__label { font-size: 16px; color: #444; }
+</style>
+```
+
+### 사용 예시
+
+```vue
+<!-- 단일 체크박스 (boolean v-model) -->
+<BaseCheckBox v-model="isActive" label="사용 여부" />
+
+<!-- 그룹 체크박스 (string[] v-model) -->
+<BaseCheckBox v-model="selectedStatuses" value="run"   label="가동" />
+<BaseCheckBox v-model="selectedStatuses" value="stop"  label="중지" />
+<BaseCheckBox v-model="selectedStatuses" value="check" label="점검" />
+
+<!-- 부분 선택 상태 (헤더 체크박스) -->
+<BaseCheckBox
+  v-model="isAllSelected"
+  label="전체 선택"
+  :is-indeterminate="isSomeSelected && !isAllSelected"
+/>
+
+<!-- 비활성화 -->
+<BaseCheckBox v-model="isFixed" label="고정값" :is-disabled="true" />
+```
+
+---
+
+## 9. BaseRadioGroup — 라디오 그룹
+
+### 핵심 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `direction='horizontal'` | 가로 배열 (기본값: `'vertical'`) |
+| `options` | 라디오 항목 배열 — label/value/isDisabled |
+
+### 동작 방식
+
+```
+vertical (기본):
+  ● 가동
+  ○ 중지
+  ○ 점검
+
+horizontal:
+  ● 가동  ○ 중지  ○ 점검
+```
+
+### Props 목록
+
+| Prop | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `modelValue` | `String` | `''` | 선택된 값 |
+| `options` | `FormOption[]` | `[]` | 라디오 항목 배열 |
+| `direction` | `'vertical'\|'horizontal'` | `'vertical'` | 배열 방향 |
+| `size` | `String` | `'md'` | sm / md / lg |
+| `isDisabled` | `Boolean` | `false` | 전체 그룹 비활성화 |
+| `ariaLabel` | `String` | `'라디오 그룹'` | WAI-ARIA 그룹 레이블 |
+
+### 컴포넌트 코드
+
+```vue
+<!-- components/base/BaseRadioGroup.vue -->
+<template>
+  <div
+    role="radiogroup"
+    :aria-label="ariaLabel"
+    :class="groupClasses"
+  >
+    <label
+      v-for="item in options"
+      :key="item.value"
+      :class="itemClasses(item)"
+    >
+      <!-- 네이티브 라디오 (접근성 유지) -->
+      <input
+        type="radio"
+        :value="item.value"
+        :checked="model === String(item.value)"
+        :disabled="isDisabled || item.isDisabled"
+        :aria-label="item.label"
+        class="radio__native"
+        @change="model = String(item.value)"
+      />
+
+      <!-- 커스텀 라디오 점 -->
+      <span class="radio__dot" aria-hidden="true">
+        <span
+          v-if="model === String(item.value)"
+          class="radio__dot-inner"
+        />
+      </span>
+
+      <!-- 레이블 -->
+      <span class="radio__label">{{ item.label }}</span>
+    </label>
+  </div>
+</template>
+
+<script setup lang="ts">
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseRadioGroup' })
+
+import type { FormOption, FormSize } from '~/types/form'
+
+// ─── Props ────────────────────────────────────────────────────────────────
+interface Props {
+  options?:    FormOption[]
+  direction?:  'vertical' | 'horizontal'
+  size?:       FormSize
+  isDisabled?: boolean
+  ariaLabel?:  string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  options:    () => [],
+  direction:  'vertical',
+  size:       'md',
+  isDisabled: false,
+  ariaLabel:  '라디오 그룹',
+})
+
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+const model = defineModel<string>({ default: '' })
+
+// ─── Computed ─────────────────────────────────────────────────────────────
+const groupClasses = computed(() => [
+  'radio-group',
+  `radio-group--${props.direction}`,
+  `radio-group--${props.size}`,
+  { 'radio-group--disabled': props.isDisabled }
+])
+
+const itemClasses = (item: FormOption) => [
+  'radio-group__item',
+  {
+    'radio-group__item--checked':  model.value === String(item.value),
+    'radio-group__item--disabled': props.isDisabled || item.isDisabled,
+  }
+]
+</script>
+
+<style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
+/* ── 그룹 컨테이너 ── */
+.radio-group { display: flex; gap: 8px; }
+.radio-group--vertical    { flex-direction: column; }
+.radio-group--horizontal  { flex-direction: row; flex-wrap: wrap; }
+.radio-group--disabled    { opacity: 0.45; pointer-events: none; }
+
+/* ── 항목 (label) ── */
+.radio-group__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.radio-group__item--disabled { cursor: not-allowed; }
+
+/* ── 네이티브 input 숨김 ── */
+.radio__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* ── 커스텀 라디오 원 ── */
+.radio__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+/* 크기 */
+.radio-group--sm .radio__dot { width: 14px; height: 14px; }
+.radio-group--md .radio__dot { width: 16px; height: 16px; }
+.radio-group--lg .radio__dot { width: 20px; height: 20px; }
+
+/* 선택된 항목의 원 */
+.radio-group__item--checked .radio__dot {
+  border-color: var(--color-primary);
+}
+
+/* ── 내부 채워진 점 ── */
+.radio__dot-inner {
+  display: block;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.radio-group--sm .radio__dot-inner { width: 6px;  height: 6px;  }
+.radio-group--md .radio__dot-inner { width: 8px;  height: 8px;  }
+.radio-group--lg .radio__dot-inner { width: 10px; height: 10px; }
+
+/* 포커스 표시 */
+.radio__native:focus-visible + .radio__dot {
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* ── 레이블 ── */
+.radio-group--sm .radio__label { font-size: 12px; color: #444; }
+.radio-group--md .radio__label { font-size: 14px; color: #444; }
+.radio-group--lg .radio__label { font-size: 16px; color: #444; }
+
+.radio-group__item--checked .radio__label {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+</style>
+```
+
+### 사용 예시
+
+```vue
+<!-- 가로 배열 -->
+<BaseRadioGroup
+  v-model="machineStatus"
+  direction="horizontal"
+  :options="[
+    { value: 'run',   label: '가동' },
+    { value: 'stop',  label: '중지' },
+    { value: 'check', label: '점검' },
+  ]"
+/>
+
+<!-- 세로 배열 (기본) -->
+<BaseRadioGroup
+  v-model="shiftType"
+  :options="shiftOptions"
+  aria-label="근무 유형 선택"
+/>
+
+<!-- 일부 비활성화 -->
+<BaseRadioGroup
+  v-model="priority"
+  :options="[
+    { value: 'high',   label: '높음' },
+    { value: 'normal', label: '보통' },
+    { value: 'low',    label: '낮음', isDisabled: true },
+  ]"
+/>
+```
+
+---
+
+## 10. BaseTextArea — 텍스트에어리어
+
+### 핵심 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `rows` | 기본 표시 줄 수 (기본값: `4`) |
+| `maxLength` | 최대 입력 글자 수 + 카운터 표시 |
+| `isResizable` | 사용자 세로 크기 조절 허용 여부 |
+
+### Props 목록
+
+| Prop | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `modelValue` | `String` | `''` | v-model 값 |
+| `placeholder` | `String` | `''` | placeholder 텍스트 |
+| `label` | `String` | `undefined` | 레이블 텍스트 |
+| `rows` | `Number` | `4` | 기본 표시 줄 수 |
+| `maxLength` | `Number` | `undefined` | 최대 입력 글자 수 |
+| `isDisabled` | `Boolean` | `false` | 비활성화 |
+| `isReadonly` | `Boolean` | `false` | 읽기 전용 |
+| `isResizable` | `Boolean` | `true` | 세로 크기 조절 허용 |
+| `block` | `Boolean` | `false` | 전체 너비 |
+
+### 컴포넌트 코드
+
+```vue
+<!-- components/base/BaseTextArea.vue -->
+<template>
+  <div :class="wrapperClasses">
+
+    <!-- 레이블 -->
+    <label v-if="label" :for="textareaId" class="textarea__label">
+      {{ label }}
+    </label>
+
+    <!-- 입력 영역 래퍼 -->
+    <div class="textarea__wrap">
+      <textarea
+        :id="textareaId"
+        v-model="model"
+        :placeholder="placeholder"
+        :disabled="isDisabled"
+        :readonly="isReadonly"
+        :rows="rows"
+        :maxlength="maxLength"
+        :aria-label="label ?? placeholder"
+        :aria-disabled="isDisabled"
+        :class="inputClasses"
+        @blur="emit('blur', $event)"
+        @focus="emit('focus', $event)"
+      />
+
+      <!-- 글자 수 카운터 -->
+      <span v-if="maxLength" class="textarea__counter" aria-live="polite">
+        {{ model.length }} / {{ maxLength }}
+      </span>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseTextArea' })
+
+// ─── Props ────────────────────────────────────────────────────────────────
+interface Props {
+  placeholder?: string
+  label?:       string
+  rows?:        number
+  maxLength?:   number
+  isDisabled?:  boolean
+  isReadonly?:  boolean
+  isResizable?: boolean
+  block?:       boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  placeholder: '',
+  rows:        4,
+  isDisabled:  false,
+  isReadonly:  false,
+  isResizable: true,
+  block:       false,
+})
+
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+const model = defineModel<string>({ default: '' })
+
+// ─── Emits ────────────────────────────────────────────────────────────────
+const emit = defineEmits<{
+  'blur':  [event: FocusEvent]
+  'focus': [event: FocusEvent]
+}>()
+
+// ─── useId (Vue 3.5+) ────────────────────────────────────────────────────
+const textareaId = useId()
+
+// ─── Computed ─────────────────────────────────────────────────────────────
+const wrapperClasses = computed(() => [
+  'textarea',
+  { 'textarea--block': props.block }
+])
+
+const inputClasses = computed(() => [
+  'textarea__input',
+  {
+    'textarea__input--disabled':    props.isDisabled,
+    'textarea__input--readonly':    props.isReadonly,
+    'textarea__input--no-resize':   !props.isResizable,
+    'textarea__input--has-counter': !!props.maxLength,
+  }
+])
+</script>
+
+<style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
+/* ── Wrapper ── */
+.textarea       { display: inline-flex; flex-direction: column; gap: 4px; }
+.textarea--block { display: flex; width: 100%; }
+
+/* ── 레이블 ── */
+.textarea__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* ── 입력 래퍼 ── */
+.textarea__wrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+/* ── textarea 본체 ── */
+.textarea__input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.textarea__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* 카운터가 있을 때 하단 패딩 확보 */
+.textarea__input--has-counter { padding-bottom: 28px; }
+
+/* 상태 */
+.textarea__input--disabled { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
+.textarea__input--readonly  { background: #fafafa; cursor: default; }
+.textarea__input--no-resize { resize: none; }
+
+/* ── 글자 수 카운터 ── */
+.textarea__counter {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  font-size: 11px;
+  color: #aaa;
+  pointer-events: none;
+}
+</style>
+```
+
+### 사용 예시
+
+```vue
+<!-- 기본 사용 -->
+<BaseTextArea v-model="memo" label="메모" placeholder="메모를 입력하세요" />
+
+<!-- 글자 수 제한 + 카운터 -->
+<BaseTextArea v-model="description" label="설명" :max-length="500" :block="true" />
+
+<!-- 크기 고정 (조절 불가) -->
+<BaseTextArea
+  v-model="remark"
+  label="비고"
+  :rows="3"
+  :is-resizable="false"
+  :block="true"
+/>
+
+<!-- 읽기 전용 -->
+<BaseTextArea v-model="logContent" label="로그" :is-readonly="true" :rows="6" />
+```
+
+---
+
+## 11. BaseDatePicker — 날짜 선택기
+
+### 핵심 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `min` / `max` | 선택 가능 날짜 범위 제한 (`YYYY-MM-DD` 형식) |
+| `outputFormat` | `'YYYY-MM-DD'`(기본) 또는 `'YYYYMMDD'` — MES DB 저장 형식 |
+
+### 날짜 형식 동작
+
+```
+outputFormat='YYYY-MM-DD' (기본):
+  화면 표시 및 v-model 값: '2025-03-23'
+
+outputFormat='YYYYMMDD':
+  v-model 값: '20250323'  (DB VARCHAR(8) 저장용)
+  화면 표시:  '2025-03-23' (네이티브 날짜 input 형식 유지)
+```
+
+> **주의**: 이 컴포넌트는 브라우저 내장 날짜 선택기를 활용합니다.
+> 브라우저별 UI 차이가 있을 수 있으며, 커스텀 캘린더가 필요하다면
+> `v-calendar` 또는 `vue-datepicker` 라이브러리 도입을 검토하세요.
+
+### Props 목록
+
+| Prop | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `modelValue` | `String` | `''` | v-model 값 (날짜 문자열) |
+| `label` | `String` | `undefined` | 레이블 텍스트 |
+| `placeholder` | `String` | `'날짜 선택'` | placeholder 텍스트 |
+| `min` | `String` | `undefined` | 최소 날짜 (`YYYY-MM-DD`) |
+| `max` | `String` | `undefined` | 최대 날짜 (`YYYY-MM-DD`) |
+| `outputFormat` | `String` | `'YYYY-MM-DD'` | v-model 출력 형식 |
+| `isDisabled` | `Boolean` | `false` | 비활성화 |
+| `isReadonly` | `Boolean` | `false` | 읽기 전용 |
+| `size` | `String` | `'md'` | sm / md / lg |
+| `block` | `Boolean` | `false` | 전체 너비 |
+
+### 컴포넌트 코드
+
+```vue
+<!-- components/base/BaseDatePicker.vue -->
+<template>
+  <div :class="wrapperClasses">
+
+    <!-- 레이블 -->
+    <label v-if="label" :for="dateId" class="datepicker__label">
+      {{ label }}
+    </label>
+
+    <!-- 입력 래퍼 -->
+    <div class="datepicker__wrap">
+      <input
+        :id="dateId"
+        type="date"
+        :value="internalValue"
+        :min="min"
+        :max="max"
+        :disabled="isDisabled"
+        :readonly="isReadonly"
+        :aria-label="label ?? placeholder"
+        :aria-disabled="isDisabled"
+        :class="inputClasses"
+        @change="handleChange"
+      />
+
+      <!-- 달력 아이콘 -->
+      <span class="datepicker__icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M5 1V3M11 1V3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M1 6H15" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="4" y="9" width="2" height="2" rx="0.5" fill="currentColor"/>
+          <rect x="7" y="9" width="2" height="2" rx="0.5" fill="currentColor"/>
+          <rect x="10" y="9" width="2" height="2" rx="0.5" fill="currentColor"/>
+        </svg>
+      </span>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseDatePicker' })
+
+import type { FormSize } from '~/types/form'
+
+// ─── Props ────────────────────────────────────────────────────────────────
+interface Props {
+  label?:        string
+  placeholder?:  string
+  min?:          string   // YYYY-MM-DD
+  max?:          string   // YYYY-MM-DD
+  outputFormat?: 'YYYY-MM-DD' | 'YYYYMMDD'
+  isDisabled?:   boolean
+  isReadonly?:   boolean
+  size?:         FormSize
+  block?:        boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  placeholder:  '날짜 선택',
+  outputFormat: 'YYYY-MM-DD',
+  isDisabled:   false,
+  isReadonly:   false,
+  size:         'md',
+  block:        false,
+})
+
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+const model = defineModel<string>({ default: '' })
+
+// ─── useId (Vue 3.5+) ────────────────────────────────────────────────────
+const dateId = useId()
+
+// ─── Computed ─────────────────────────────────────────────────────────────
+
+/**
+ * 네이티브 input[type=date]은 항상 YYYY-MM-DD 형식을 요구하므로
+ * model 값이 YYYYMMDD 형식이라면 변환하여 input에 전달
+ */
+const internalValue = computed(() => {
+  if (!model.value) return ''
+  if (props.outputFormat === 'YYYYMMDD' && model.value.length === 8) {
+    // '20250323' → '2025-03-23'
+    return `${model.value.slice(0, 4)}-${model.value.slice(4, 6)}-${model.value.slice(6, 8)}`
+  }
+  return model.value
+})
+
+const wrapperClasses = computed(() => [
+  'datepicker',
+  `datepicker--${props.size}`,
+  { 'datepicker--block': props.block }
+])
+
+const inputClasses = computed(() => [
+  'datepicker__input',
+  {
+    'datepicker__input--disabled': props.isDisabled,
+    'datepicker__input--readonly': props.isReadonly,
+  }
+])
+
+// ─── Methods ──────────────────────────────────────────────────────────────
+const handleChange = (event: Event) => {
+  const rawValue = (event.target as HTMLInputElement).value  // 항상 YYYY-MM-DD
+
+  if (!rawValue) {
+    model.value = ''
+    return
+  }
+
+  if (props.outputFormat === 'YYYYMMDD') {
+    // 'YYYY-MM-DD' → 'YYYYMMDD'
+    model.value = rawValue.replace(/-/g, '')
+  } else {
+    model.value = rawValue
+  }
+}
+</script>
+
+<style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
+/* ── Wrapper ── */
+.datepicker       { display: inline-flex; flex-direction: column; gap: 4px; }
+.datepicker--block { display: flex; width: 100%; }
+
+/* ── 레이블 ── */
+.datepicker__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* ── 입력 래퍼 ── */
+.datepicker__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* ── 날짜 input ── */
+.datepicker__input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding-left: 12px;
+  padding-right: 36px;
+  color: #333;
+  background: #fff;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  cursor: pointer;
+  appearance: none; /* 브라우저 기본 아이콘 숨김 (Webkit) */
+}
+
+.datepicker__input::-webkit-calendar-picker-indicator {
+  opacity: 0;  /* 기본 달력 아이콘 숨기고 커스텀 아이콘 표시 */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  cursor: pointer;
+}
+
+.datepicker__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* 크기 */
+.datepicker--sm .datepicker__input { height: 32px; font-size: 12px; }
+.datepicker--md .datepicker__input { height: 40px; font-size: 14px; }
+.datepicker--lg .datepicker__input { height: 48px; font-size: 16px; }
+
+/* 상태 */
+.datepicker__input--disabled { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
+.datepicker__input--readonly  { background: #fafafa; cursor: default; }
+
+/* ── 달력 아이콘 ── */
+.datepicker__icon {
+  position: absolute;
+  right: 10px;
+  color: #aaa;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+</style>
+```
+
+### 사용 예시
+
+```vue
+<!-- 기본 사용 (YYYY-MM-DD) -->
+<BaseDatePicker v-model="startDate" label="시작일" />
+
+<!-- MES DB 저장용 YYYYMMDD 형식 -->
+<BaseDatePicker v-model="prodDate" label="생산일자" output-format="YYYYMMDD" />
+
+<!-- 날짜 범위 제한 -->
+<BaseDatePicker
+  v-model="searchDate"
+  label="조회일자"
+  :min="'2020-01-01'"
+  :max="today"
+/>
+
+<!-- 기간 조회 (시작~종료) -->
+<div style="display: flex; gap: 8px; align-items: center;">
+  <BaseDatePicker v-model="fromDate" label="조회 기간" />
+  <span>~</span>
+  <BaseDatePicker v-model="toDate" :min="fromDate" />
+</div>
+```
+
+---
+
+## 12. BaseNumberInput — 숫자 입력
+
+### 핵심 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `useComma=true` | 천 단위 콤마 자동 포맷 (표시용, 실제 v-model은 숫자) |
+| `suffix` | 단위 텍스트 표시 (예: `'원'`, `'개'`, `'kg'`) |
+| `min` / `max` | 입력 가능 숫자 범위 제한 |
+| `decimalPlaces` | 소수점 허용 자릿수 (기본값: `0` — 정수만) |
+
+### 동작 방식
+
+```
+useComma=true, suffix='원':
+  입력: 1500000
+  화면: 1,500,000 원
+  v-model: 1500000  (숫자형)
+
+decimalPlaces=2:
+  입력: 3.14159
+  화면: 3.14  (소수점 2자리로 제한)
+  v-model: 3.14
+
+min=0, max=100:
+  입력: -5  → 0으로 보정
+  입력: 999 → 100으로 보정
+```
+
+### Props 목록
+
+| Prop | 타입 | 기본값 | 설명 |
+|------|------|--------|------|
+| `modelValue` | `Number\|null` | `null` | v-model 숫자 값 |
+| `label` | `String` | `undefined` | 레이블 텍스트 |
+| `placeholder` | `String` | `'0'` | placeholder |
+| `min` | `Number` | `undefined` | 최솟값 |
+| `max` | `Number` | `undefined` | 최댓값 |
+| `decimalPlaces` | `Number` | `0` | 소수점 허용 자릿수 |
+| `useComma` | `Boolean` | `false` | 천 단위 콤마 포맷 |
+| `suffix` | `String` | `undefined` | 단위 표시 (예: `'원'`, `'개'`) |
+| `isDisabled` | `Boolean` | `false` | 비활성화 |
+| `isReadonly` | `Boolean` | `false` | 읽기 전용 |
+| `size` | `String` | `'md'` | sm / md / lg |
+| `block` | `Boolean` | `false` | 전체 너비 |
+
+### 컴포넌트 코드
+
+```vue
+<!-- components/base/BaseNumberInput.vue -->
+<template>
+  <div :class="wrapperClasses">
+
+    <!-- 레이블 -->
+    <label v-if="label" :for="inputId" class="number__label">
+      {{ label }}
+    </label>
+
+    <!-- 입력 래퍼 -->
+    <div class="number__wrap">
+      <input
+        :id="inputId"
+        ref="inputRef"
+        type="text"
+        inputmode="decimal"
+        :value="displayValue"
+        :placeholder="placeholder"
+        :disabled="isDisabled"
+        :readonly="isReadonly"
+        :aria-label="label ?? placeholder"
+        :aria-disabled="isDisabled"
+        :class="inputClasses"
+        @focus="handleFocus"
+        @blur="handleBlur"
+        @input="handleInput"
+        @keydown="handleKeydown"
+      />
+
+      <!-- 단위 -->
+      <span v-if="suffix" class="number__suffix" aria-hidden="true">
+        {{ suffix }}
+      </span>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+// defineOptions: 컴포넌트 명시적 이름 부여 (Vue 3.3+)
+defineOptions({ name: 'BaseNumberInput' })
+
+import type { FormSize } from '~/types/form'
+
+// ─── Props ────────────────────────────────────────────────────────────────
+interface Props {
+  label?:         string
+  placeholder?:   string
+  min?:           number
+  max?:           number
+  decimalPlaces?: number
+  useComma?:      boolean
+  suffix?:        string
+  isDisabled?:    boolean
+  isReadonly?:    boolean
+  size?:          FormSize
+  block?:         boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  placeholder:   '0',
+  decimalPlaces: 0,
+  useComma:      false,
+  isDisabled:    false,
+  isReadonly:    false,
+  size:          'md',
+  block:         false,
+})
+
+// ─── defineModel (Vue 3.4+) ───────────────────────────────────────────────
+const model = defineModel<number | null>({ default: null })
+
+// ─── useId / useTemplateRef (Vue 3.5+) ────────────────────────────────────
+const inputId  = useId()
+const inputRef = useTemplateRef<HTMLInputElement>('inputRef')
+
+// ─── State ────────────────────────────────────────────────────────────────
+// 포커스 중 여부 (포커스 시 콤마 제거하여 편집 편의 제공)
+const isFocused = ref(false)
+
+// ─── Computed ─────────────────────────────────────────────────────────────
+/**
+ * 화면에 표시할 값
+ * - 포커스 중: 콤마 없이 숫자만 (편집 편의)
+ * - 포커스 아닐 때: useComma=true이면 천 단위 콤마 포맷
+ */
+const displayValue = computed(() => {
+  if (model.value === null || model.value === undefined) return ''
+
+  if (isFocused.value) {
+    // 포커스 중: 원시 숫자 표시
+    return String(model.value)
+  }
+
+  const num = model.value
+  if (props.useComma) {
+    // 천 단위 콤마 포맷
+    return num.toLocaleString('ko-KR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: props.decimalPlaces,
+    })
+  }
+  return String(num)
+})
+
+const wrapperClasses = computed(() => [
+  'number',
+  `number--${props.size}`,
+  { 'number--block': props.block }
+])
+
+const inputClasses = computed(() => [
+  'number__input',
+  {
+    'number__input--disabled':    props.isDisabled,
+    'number__input--readonly':    props.isReadonly,
+    'number__input--has-suffix':  !!props.suffix,
+  }
+])
+
+// ─── Methods ──────────────────────────────────────────────────────────────
+const handleFocus = () => {
+  isFocused.value = true
+}
+
+const handleBlur = () => {
+  isFocused.value = false
+  // blur 시 min/max 범위 보정
+  if (model.value !== null) {
+    let val = model.value
+    if (props.min !== undefined) val = Math.max(props.min, val)
+    if (props.max !== undefined) val = Math.min(props.max, val)
+    model.value = val
+  }
+}
+
+const handleInput = (event: Event) => {
+  const raw = (event.target as HTMLInputElement).value
+
+  // 빈 값 → null
+  if (!raw || raw === '-') {
+    model.value = null
+    return
+  }
+
+  // 허용 문자: 숫자, 소수점, 음수 부호
+  const decimalPattern = props.decimalPlaces > 0
+    ? new RegExp(`^-?\\d*(\\.\\d{0,${props.decimalPlaces}})?$`)
+    : /^-?\d*$/
+
+  if (!decimalPattern.test(raw)) {
+    // 유효하지 않은 입력: DOM 값 원복
+    if (inputRef.value) {
+      inputRef.value.value = model.value !== null ? String(model.value) : ''
+    }
+    return
+  }
+
+  const parsed = parseFloat(raw)
+  model.value = isNaN(parsed) ? null : parsed
+}
+
+/**
+ * 숫자 입력만 허용 (방향키, Backspace, Delete, Tab 등 기능 키 통과)
+ */
+const handleKeydown = (event: KeyboardEvent) => {
+  const allowedKeys = [
+    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+    'Home', 'End',
+  ]
+  if (allowedKeys.includes(event.key)) return
+
+  // Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X 허용
+  if (event.ctrlKey || event.metaKey) return
+
+  // 소수점: decimalPlaces > 0 일 때만 허용
+  if (event.key === '.' && props.decimalPlaces > 0) return
+
+  // 음수 부호: 첫 번째 위치에서만 허용
+  if (event.key === '-' && props.min === undefined) {
+    const input = event.target as HTMLInputElement
+    if (input.selectionStart === 0 && !input.value.includes('-')) return
+  }
+
+  // 숫자가 아닌 입력 차단
+  if (!/^\d$/.test(event.key)) {
+    event.preventDefault()
+  }
+}
+</script>
+
+<style scoped>
+/* ── CSS 디자인 토큰 ── */
+:root {
+  --color-primary:       #667eea;
+  --color-primary-light: rgba(102, 126, 234, 0.15);
+  --color-border:        #d9d9d9;
+}
+
+/* ── Wrapper ── */
+.number       { display: inline-flex; flex-direction: column; gap: 4px; }
+.number--block { display: flex; width: 100%; }
+
+/* ── 레이블 ── */
+.number__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* ── 입력 래퍼 ── */
+.number__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* ── 숫자 input ── */
+.number__input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: #333;
+  background: #fff;
+  font-family: inherit;
+  text-align: right; /* 숫자는 우측 정렬 */
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.number__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* 크기 */
+.number--sm .number__input { height: 32px; padding: 0 10px; font-size: 12px; }
+.number--md .number__input { height: 40px; padding: 0 12px; font-size: 14px; }
+.number--lg .number__input { height: 48px; padding: 0 16px; font-size: 16px; }
+
+/* 단위가 있을 때 우측 여백 */
+.number--sm .number__input--has-suffix { padding-right: 32px; }
+.number--md .number__input--has-suffix { padding-right: 36px; }
+.number--lg .number__input--has-suffix { padding-right: 44px; }
+
+/* 상태 */
+.number__input--disabled { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
+.number__input--readonly  { background: #fafafa; cursor: default; }
+
+/* ── 단위 표시 ── */
+.number__suffix {
+  position: absolute;
+  right: 10px;
+  font-size: 13px;
+  color: #888;
+  pointer-events: none;
+  white-space: nowrap;
+}
+</style>
+```
+
+### 사용 예시
+
+```vue
+<!-- 정수 입력 -->
+<BaseNumberInput v-model="quantity" label="수량" suffix="개" :min="0" :max="9999" />
+
+<!-- 천 단위 콤마 + 단위 -->
+<BaseNumberInput v-model="price" label="단가" :use-comma="true" suffix="원" :min="0" />
+
+<!-- 소수점 2자리 허용 -->
+<BaseNumberInput v-model="weight" label="중량" :decimal-places="2" suffix="kg" :min="0" />
+
+<!-- 비율 (0~100) -->
+<BaseNumberInput v-model="ratio" label="불량률" suffix="%" :min="0" :max="100" :decimal-places="1" />
+
+<!-- 읽기 전용 금액 표시 -->
+<BaseNumberInput v-model="totalAmount" label="합계금액" :use-comma="true" suffix="원" :is-readonly="true" :block="true" />
+```
+
+---
+
+## 13. 실제 MES 페이지 적용 예시 (검색 조건 영역)
 
 ```vue
 <script setup lang="ts">
 // Nuxt auto-imports: ref는 import 없이 사용 가능
 import type { FormOption } from '~/types/form'
 
-// 검색 조건 상태
-const searchName      = ref('')
-const searchGroup     = ref('')
-const selectedStatuses = ref<string[]>([])
-const selectedShifts  = ref<string[]>([])
-const selectedMenus   = ref<string[]>([])
+// ── 검색 조건 상태 ──────────────────────────────────────────────────────
+const searchName       = ref('')                // BaseTextBox
+const searchGroup      = ref('')                // BaseSelectBox
+const selectedStatuses = ref<string[]>([])      // BaseCheckBox 그룹
+const selectedShifts   = ref<string[]>([])      // BaseToggleGroup
+const selectedMenus    = ref<string[]>([])      // BaseComboBox 다중
+const prodType         = ref('')                // BaseRadioGroup
+const remark           = ref('')                // BaseTextArea
+const fromDate         = ref('')                // BaseDatePicker
+const toDate           = ref('')                // BaseDatePicker
+const quantity         = ref<number | null>(null)  // BaseNumberInput
 
-// 옵션 목록
+// ── 옵션 목록 ──────────────────────────────────────────────────────────
 const groupOptions: FormOption[] = [
   { value: '',      label: '전체'   },
   { value: 'ADMIN', label: 'ADMIN' },
@@ -1571,22 +2871,111 @@ const menuOptions: FormOption[] = [
   { value: 'settings',  label: '설정'     },
 ]
 
+const prodTypeOptions: FormOption[] = [
+  { value: 'normal',  label: '일반 생산' },
+  { value: 'rework',  label: '재작업'   },
+  { value: 'sample',  label: '샘플'     },
+]
+
+// ── 핸들러 ──────────────────────────────────────────────────────────────
 const handleSearch = () => {
-  console.log({ searchName: searchName.value, searchGroup: searchGroup.value })
+  // 빈 catch 금지: 에러 발생 시 에러 메시지 표시
+  console.log({
+    searchName: searchName.value,
+    searchGroup: searchGroup.value,
+    fromDate: fromDate.value,
+    toDate: toDate.value,
+    quantity: quantity.value,
+  })
 }
+
 const handleReset = () => {
-  searchName.value = ''
-  searchGroup.value = ''
+  searchName.value       = ''
+  searchGroup.value      = ''
   selectedStatuses.value = []
-  selectedShifts.value = []
-  selectedMenus.value = []
+  selectedShifts.value   = []
+  selectedMenus.value    = []
+  prodType.value         = ''
+  remark.value           = ''
+  fromDate.value         = ''
+  toDate.value           = ''
+  quantity.value         = null
 }
 </script>
+
+```
+
+### 템플릿 적용 예시
+
+```vue
+<template>
+  <div class="search-area">
+
+    <!-- 텍스트박스: 이름 검색 -->
+    <BaseTextBox v-model="searchName" label="이름" placeholder="이름 검색" />
+
+    <!-- 셀렉트박스: 그룹 선택 -->
+    <BaseSelectBox
+      v-model="searchGroup"
+      label="그룹"
+      :options="groupOptions"
+      :select-first-by-default="true"
+    />
+
+    <!-- 날짜 범위: 조회 기간 -->
+    <BaseDatePicker v-model="fromDate" label="조회 기간" />
+    <span>~</span>
+    <BaseDatePicker v-model="toDate" :min="fromDate" />
+
+    <!-- 숫자 입력: 수량 -->
+    <BaseNumberInput v-model="quantity" label="수량" suffix="개" :min="0" :use-comma="true" />
+
+    <!-- 체크박스 그룹: 상태 다중 선택 -->
+    <div>
+      <span class="label">상태</span>
+      <BaseCheckBox v-model="selectedStatuses" value="active"    label="활성" />
+      <BaseCheckBox v-model="selectedStatuses" value="inactive"  label="비활성" />
+      <BaseCheckBox v-model="selectedStatuses" value="suspended" label="정지" />
+    </div>
+
+    <!-- 라디오 그룹: 생산 유형 단독 선택 -->
+    <BaseRadioGroup
+      v-model="prodType"
+      label="생산 유형"
+      direction="horizontal"
+      :options="prodTypeOptions"
+    />
+
+    <!-- 토글 그룹: 시프트 선택 -->
+    <BaseToggleGroup
+      v-model="selectedShifts"
+      label="시프트"
+      :count="3"
+      :is-multiple="true"
+    />
+
+    <!-- 콤보박스: 메뉴 다중 선택 -->
+    <BaseComboBox
+      v-model="selectedMenus"
+      label="메뉴"
+      :options="menuOptions"
+      :is-multiple="true"
+    />
+
+    <!-- 텍스트에어리어: 비고 -->
+    <BaseTextArea v-model="remark" label="비고" :rows="3" :max-length="200" :block="true" />
+
+    <!-- 버튼 -->
+    <BaseButton btn-type="search" @click="handleSearch" />
+    <BaseButton btn-type="reset"  @click="handleReset" />
+
+  </div>
+</template>
 ```
 
 ---
 
-## 9. 현대화 변경점 요약 (Vue 3.4+ / Vue 3.5+)
+## 14. 현대화 변경점 요약 (Vue 3.4+ / Vue 3.5+)
 
 | 항목 | 구식 패턴 | 현대 패턴 | 적용 버전 |
 |------|-----------|-----------|-----------|
@@ -1596,6 +2985,9 @@ const handleReset = () => {
 | Template Ref | `ref<HTMLElement\|null>(null)` | `useTemplateRef<HTMLElement>('name')` | Vue 3.5+ |
 | 외부 클릭 감지 | `addEventListener` / `removeEventListener` | `onClickOutside` (VueUse) | VueUse |
 | Auto-imports | `import { ref, computed } from 'vue'` | import 없이 바로 사용 | Nuxt 3 |
+| 체크박스 v-model | `modelValue: Boolean` + 그룹은 별도 컴포넌트 | `Boolean\|String[]` 유니온으로 단일/그룹 통합 | Vue 3.4+ |
+| 날짜 형식 변환 | 템플릿 내 수동 replace 처리 | `computed(internalValue)` + `handleChange` 캡슐화 | Vue 3 |
+| 숫자 포맷 표시 | `Intl.NumberFormat` 직접 호출 | `toLocaleString('ko-KR')` + `isFocused` 상태로 편집/표시 분리 | Vue 3 |
 | CSS 색상 | 하드코딩 hex (`#667eea`) | CSS 변수 (`var(--color-primary)`) | 현대 CSS |
 | 컴포넌트명 | (없음) | `defineOptions({ name: 'Base...' })` | Vue 3.3+ |
 

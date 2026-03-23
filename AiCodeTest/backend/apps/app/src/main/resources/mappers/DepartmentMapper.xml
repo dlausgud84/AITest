@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dit.department.persistence.mapper.DepartmentMapper">
+
+    <!-- ════════════════════════════
+         부서 목록 조회 (NB_DEPARTMENTS)
+         팝업용 - DEPARTMENT_ID, DEPARTMENT_NAME 조회
+         조건: SITE_ID = #{siteId}, DELETE_FLAG = 'N'
+         ════════════════════════════ -->
+    <select id="selectDepartmentList" resultType="com.dit.department.dto.DepartmentDto">
+        SELECT
+            DEPARTMENT_ID   AS departmentId,
+            DEPARTMENT_NAME AS departmentName
+        FROM NB_DEPARTMENTS
+        WHERE DELETE_FLAG = 'N'
+        <if test="siteId != null and siteId != ''">
+            AND SITE_ID = #{siteId}
+        </if>
+        ORDER BY DEPARTMENT_ID ASC
+    </select>
+
+</mapper>

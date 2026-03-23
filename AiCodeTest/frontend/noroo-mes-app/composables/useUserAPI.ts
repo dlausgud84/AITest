@@ -9,9 +9,12 @@ export interface UserRow {
   userId: string
   userName: string
   departmentId: string
+  departmentName: string   // NB_DEPARTMENTS 조인
   changePasswordFlag: string
   defaultSiteId: string
+  siteName: string         // NB_SITES 조인
   defaultLanguageId: string
+  languageName: string     // NB_LANGUAGES 조인
   // 연락처
   phoneOffice: string
   phoneMobile: string
@@ -52,7 +55,8 @@ export interface UserRow {
   createDttm: string
   modifierId: string
   modifyDttm: string
-  encodePassword: string
+  // [🔒보안] encodePassword 필드 제거 — 백엔드에서 @JsonIgnore 처리되어 응답에 포함되지 않음
+  //         클라이언트 타입에도 포함하지 않아 실수로 사용하는 것을 방지
 }
 
 export interface UserSearchParams {
@@ -63,7 +67,7 @@ export interface UserSearchParams {
 
 export interface UserSaveDto {
   userId: string
-  userName: string
+  userName?: string          // 수정 시 변경된 경우만 전송 (생성 시 필수 — Service에서 검증)
   password?: string
   passwordConfirm?: string
   changePasswordFlag?: string

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dit.userrole.persistence.mapper.UserRoleMapper">
+
+    <!-- ════════════════════════════
+         사용자 권한 목록 조회 (NB_USER_ROLES)
+         - SITE_ID + USER_ID 기준 필터
+         - NB_USERS  LEFT JOIN → USER_NAME(사용자명)
+         - NB_ROLES  LEFT JOIN → ROLE_NAME(권한명)
+         ════════════════════════════ -->
+    <select id="selectUserRoleList" resultType="com.dit.userrole.dto.UserRoleDto">
+        SELECT
+            UR.USER_ID      AS userId,
+            U.USER_NAME     AS userName,
+            UR.ROLE_ID      AS roleId,
+            R.ROLE_NAME     AS roleName,
+            UR.DESCRIPTION  AS description
+        FROM NB_USER_ROLES UR WITH (NOLOCK)
+        LEFT JOIN NB_USERS U WITH (NOLOCK)
+            ON UR.USER_ID = U.USER_ID
+        LEFT JOIN NB_ROLES R WITH (NOLOCK)
+            ON UR.ROLE_ID = R.ROLE_ID
+           AND UR.SITE_ID = R.SITE_ID
+        WHERE 1 = 1
+        <if test="siteId != null and siteId != ''">
+            AND UR.SITE_ID = #{siteId}
+        </if>
+        <if test="userId != null and userId != ''">
+            AND UR.USER_ID = #{userId}
+        </if>
+        ORDER BY UR.ROLE_ID ASC
+    </select>
+
+</mapper>

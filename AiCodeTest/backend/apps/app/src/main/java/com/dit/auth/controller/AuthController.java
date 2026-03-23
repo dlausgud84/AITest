@@ -7,6 +7,8 @@ import com.dit.auth.dto.LoginResponseDTO;
 import com.dit.auth.dto.SiteDTO;
 import com.dit.auth.service.AuthService;
 import com.dit.common.response.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,13 +25,10 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     /**
      * MES 공장 목록 조회
@@ -45,11 +44,16 @@ public class AuthController {
 
     /**
      * 로그인
+     * [🔒보안] @Valid: 입력값 검증 (userId/password NotBlank) → 검증 실패 시 400 자동 반환
+     * [🔒보안] 토큰은 응답에 포함되지만, 향후 JWT 방식으로 전환 필요
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(@RequestBody LoginRequestDTO request) {
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(@Valid @RequestBody LoginRequestDTO request) {
         User user = authService.login(request.getUserId(), request.getPassword());
+
+        // TODO: 향후 UUID 토큰을 JWT(HS256)로 교체하여 서버리스 인증 구조로 개선 필요
         String token = UUID.randomUUID().toString();
+
         LoginResponseDTO response = new LoginResponseDTO(
                 user.getUserId(),
                 user.getUserName(),

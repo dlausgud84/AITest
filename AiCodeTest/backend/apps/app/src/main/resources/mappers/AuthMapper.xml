@@ -5,13 +5,14 @@
 <mapper namespace="com.dit.auth.persistence.mapper.AuthMapper">
 
     <resultMap id="siteMap" type="com.dit.auth.domain.Site">
-        <result column="SITE_ID" property="siteId" />
+        <result column="SITE_ID"   property="siteId" />
         <result column="SITE_NAME" property="siteName" />
     </resultMap>
 
     <resultMap id="userMap" type="com.dit.auth.domain.User">
-        <result column="USER_ID" property="userId" />
+        <result column="USER_ID"   property="userId" />
         <result column="USER_NAME" property="userName" />
+        <result column="PASSWORD"  property="password" />
     </resultMap>
 
     <!-- MES 공장 목록 조회 -->
@@ -22,12 +23,12 @@
         ORDER BY SITE_NAME ASC
     </select>
 
-    <!-- 사용자 인증 (USER_ID + PASSWORD 일치 시 반환) -->
-    <select id="selectUserByIdAndPassword" resultMap="userMap">
-        SELECT USER_ID, USER_NAME
+    <!-- 사용자 ID로 사용자 조회 (비밀번호 검증은 Service에서 평문 비교로 수행) -->
+    <select id="selectUserById" resultMap="userMap">
+        SELECT USER_ID, USER_NAME, PASSWORD
         FROM NB_USERS
         WHERE USER_ID = #{userId}
-          AND PASSWORD = #{password}
+          AND (DELETE_FLAG IS NULL OR DELETE_FLAG != 'Y')
     </select>
 
 </mapper>

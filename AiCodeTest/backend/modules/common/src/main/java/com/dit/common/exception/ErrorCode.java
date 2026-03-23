@@ -22,7 +22,11 @@ public enum ErrorCode {
     // 사용자 관련 에러
     USER_NOT_FOUND("U001", "사용자를 찾을 수 없습니다."),
     USER_DUPLICATE("U002", "이미 존재하는 사용자 ID입니다."),
-    INVALID_USER_DATA("U003", "유효하지 않은 사용자 데이터입니다.");
+    INVALID_USER_DATA("U003", "유효하지 않은 사용자 데이터입니다."),
+
+    // 입력값 검증 에러
+    INVALID_INPUT("V001", "입력값이 올바르지 않습니다."),
+    INVALID_SORT_COLUMN("V002", "허용되지 않은 정렬 컬럼입니다.");
 
     private final String code;
     private final String message;

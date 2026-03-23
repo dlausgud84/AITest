@@ -51,6 +51,7 @@ project(":apps:app") {
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter-web")
         implementation("org.springframework.boot:spring-boot-starter-jdbc")
+        implementation("org.springframework.boot:spring-boot-starter-validation") // @Valid
         runtimeOnly("com.microsoft.sqlserver:mssql-jdbc:12.4.1.jre11")
 
         // MyBatis
@@ -86,6 +87,9 @@ project(":modules:menu") {
 project(":modules:auth") {
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.springframework.boot:spring-boot-starter-web")        // @JsonIgnore (Jackson)
+        implementation("org.springframework.boot:spring-boot-starter-validation") // @NotBlank, @Size
+        implementation("org.springframework.security:spring-security-crypto")     // BCryptPasswordEncoder
         implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
         implementation(project(":modules:common"))
     }
@@ -95,6 +99,9 @@ project(":modules:auth") {
 project(":modules:user") {
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.springframework.boot:spring-boot-starter-web")        // @JsonIgnore (Jackson)
+        implementation("org.springframework.boot:spring-boot-starter-validation") // @NotBlank, @Size, @Email
+        implementation("org.springframework.security:spring-security-crypto")     // BCryptPasswordEncoder
         implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
         implementation(project(":modules:common"))
     }

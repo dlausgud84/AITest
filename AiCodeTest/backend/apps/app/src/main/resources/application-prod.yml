@@ -1,8 +1,9 @@
 spring:
   datasource:
     # Microsoft SQL Server 운영 환경 연결
-    # 운영 배포 전 실제 서버 정보로 변경할 것
-    url: jdbc:sqlserver://${DB_HOST:localhost}:1433;databaseName=${DB_NAME:MESDB};encrypt=true;trustServerCertificate=true
+    # [🔒보안] trustServerCertificate 옵션 제거 — 운영 환경에서는 공식 CA 인증서 사용
+    # [🔒보안] 모든 민감 값은 반드시 서버 환경변수로 주입 (코드에 직접 작성 금지)
+    url: jdbc:sqlserver://${DB_HOST:localhost}:1433;databaseName=${DB_NAME:MESDB};encrypt=true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -11,9 +12,20 @@ spring:
       ddl-auto: none
     show-sql: false
 
+  # HikariCP 커넥션 풀 설정 (운영 환경 최적화)
+  datasource:
+    hikari:
+      maximum-pool-size: 10        # CPU 코어 수 × 2 기준 조정 권장
+      minimum-idle: 5
+      connection-timeout: 30000   # 30초
+      idle-timeout: 600000        # 10분
+      max-lifetime: 1800000       # 30분
+      pool-name: NorooHikariCP
+
 logging:
   level:
     root: WARN
-    com.dit: INFO
+    com.dit: WARN
     org.springframework.web: WARN
     org.mybatis: WARN
+    com.dit.auth: INFO            # 인증 이벤트(로그인/실패)는 INFO 이상 기록

@@ -120,7 +120,7 @@ backend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 
 |---|---|---|
 | [`.claude/frontend/common/common-button-guide.md`](.claude/frontend/common/common-button-guide.md) | `BaseButton.vue` | 9가지 btnType, Props, SVG 아이콘 |
 | [`.claude/frontend/common/common-grid-guide.md`](.claude/frontend/common/common-grid-guide.md) | `BaseGrid.vue` | 3가지 모드 (페이지네이션/내부스크롤/무한스크롤), 컬럼 리사이즈 |
-| [`.claude/frontend/common/common-components-guide.md`](.claude/frontend/common/common-components-guide.md) | Form 컴포넌트 | TextBox, ToggleGroup, ComboBox, SelectBox |
+| [`.claude/frontend/common/common-components-guide.md`](.claude/frontend/common/common-components-guide.md) | Form 컴포넌트 | TextBox, ToggleGroup, ComboBox, SelectBox, CheckBox, RadioGroup, TextArea, DatePicker, NumberInput |
 | [`.claude/frontend/common/common-popup-guide.md`](.claude/frontend/common/common-popup-guide.md) | `BaseModal.vue` | 4가지 모드, 5가지 크기, alert 타입 |
 
 ## 포트 구성
