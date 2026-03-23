@@ -7,14 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 상황 | 적용 스킬 | 참조 파일 |
 |------|-----------|----------|
-| `.vue` 파일 작성/수정 시 | `vue-best-practices` | `frontend/rules/Implementation.md` |
-| Nuxt 파일 작업 시 (pages/, composables/, plugins/, middleware/, nuxt.config.ts) | `nuxt` | `frontend/rules/Implementation.md` |
-| Vue Composition API 작성 시 | `vue` | `frontend/rules/Implementation.md` |
-| 라우팅/미들웨어 작업 시 | `vue-router-best-practices` | `frontend/rules/Implementation.md` |
-| composable 신규 작성 전 | `vueuse` | `frontend/rules/Implementation.md` |
-| 기존 composable 개선 시 | `vueuse-functions` | `frontend/rules/Implementation.md` |
-| 테스트 코드 작성 시 | `vitest` + `vue-testing-best-practices` | `frontend/rules/TestCodeGeneration.md` |
-| UI/UX 검토 요청 시 | `web-design-guidelines` | `frontend/rules/Plan.md` |
+| `.vue` 파일 작성/수정 시 | `vue-best-practices` | `.claude/frontend/rules/Implementation.md` |
+| Nuxt 파일 작업 시 (pages/, composables/, plugins/, middleware/, nuxt.config.ts) | `nuxt` | `.claude/frontend/rules/Implementation.md` |
+| Vue Composition API 작성 시 | `vue` | `.claude/frontend/rules/Implementation.md` |
+| 라우팅/미들웨어 작업 시 | `vue-router-best-practices` | `.claude/frontend/rules/Implementation.md` |
+| composable 신규 작성 전 | `vueuse` | `.claude/frontend/rules/Implementation.md` |
+| 기존 composable 개선 시 | `vueuse-functions` | `.claude/frontend/rules/Implementation.md` |
+| 테스트 코드 작성 시 | `vitest` + `vue-testing-best-practices` | `.claude/frontend/rules/TestCodeGeneration.md` |
+| UI/UX 검토 요청 시 | `web-design-guidelines` | `.claude/frontend/rules/Plan.md` |
 
 **적용 제외 스킬**: nuxt-ui, nuxt-content, reka-ui, unocss, pinia (composable 패턴 사용), ts-library, turborepo, pnpm 등
 
@@ -41,12 +41,12 @@ frontend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은
 
 | 단계 | 파일 | 내용 |
 |---|---|---|
-| 1. 조사 | `frontend/rules/Research.md` | 요구사항 파악, API 명서 분석, 기존 컴포넌트 확인 |
-| 2. 계획 | `frontend/rules/Plan.md` | Nuxt 라우팅 설계, 컴포넌트 분리, 상태 관리 기획 |
-| 3. 테스트 작성 | `frontend/rules/TestCodeGeneration.md` | Vitest + Vue Test Utils 테스트 구현 |
-| 4. 구현 | `frontend/rules/Implementation.md` | TypeScript 타입, Composables, UI 마크업 |
-| 5. 검증 | `frontend/rules/Verification.md` | 콘솔 에러/Lint 점검, 빌드 & 미리보기 |
-| 6. 최적화 | `frontend/rules/Optimization.md` | 번들 최적화, Lazy 로딩, 웹 접근성 |
+| 1. 조사 | `.claude/frontend/rules/Research.md` | 요구사항 분석, API 연동 조사, 기존 리소스 파악 |
+| 2. 계획 | `.claude/frontend/rules/Plan.md` | 라우팅 및 뷰 설계, 컴포넌트 설계, 상태 관리 및 데이터 패칭 설계 |
+| 3. 테스트 작성 | `.claude/frontend/rules/TestCodeGeneration.md` | Composables 단위 테스트, UI 컴포넌트 단위 테스트, Edge Case 커버리지 |
+| 4. 구현 | `.claude/frontend/rules/Implementation.md` | 타입 정의, 로직 구현, UI 및 라우팅 구현, UX 처리 및 SEO |
+| 5. 검증 | `.claude/frontend/rules/Verification.md` | 기능 검증, 코드 품질 및 정적 분석, 빌드 검증 |
+| 6. 최적화 | `.claude/frontend/rules/Optimization.md` | 렌더링 성능 및 청크 최적화, 에셋 최적화, 웹 접근성 |
 
 ## 개발 단계별 backend Rules
 
@@ -54,12 +54,12 @@ backend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 
 
 | 단계 | 파일 | 내용 |
 |---|---|---|
-| 1. 조사 | `backend/rules/Research.md` | 요구사항 파악, DB 구조 분석, 영향도 검토 |
-| 2. 계획 | `backend/rules/Plan.md` | API 설계, DB DDL, 아키텍처 설계 |
-| 3. 테스트 작성 | `backend/rules/TestCodeGeneration.md` | JUnit5 + Mockito 테스트 구현 |
-| 4. 구현 | `backend/rules/Implementation.md` | Domain → Mapper → Service → Controller 순 구현 |
-| 5. 검증 | `backend/rules/Verification.md` | API 테스트, 빌드 검증, 문서 업데이트 |
-| 6. 최적화 | `backend/rules/Optimization.md` | SQL 튜닝, 인덱싱, 보안 & 로깅 |
+| 1. 조사 | `.claude/backend/rules/Research.md` | 요구사항 파악, 기존 코드 및 DB 분석 |
+| 2. 계획 | `.claude/backend/rules/Plan.md` | API 및 DTO 설계, DB 및 MyBatis 설계, 도메인 및 서비스 설계 |
+| 3. 테스트 작성 | `.claude/backend/rules/TestCodeGeneration.md` | 단위 테스트, 통합 테스트 |
+| 4. 구현 | `.claude/backend/rules/Implementation.md` | Data Access 계층 구현, Business 로직 계층 구현, Presentation 계층 구현, 공통 처리 |
+| 5. 검증 | `.claude/backend/rules/Verification.md` | API 기능 점검, 빌드 및 정적 분석, 문서 최신화 |
+| 6. 최적화 | `.claude/backend/rules/Optimization.md` | MSSQL 쿼리 튜닝, 자원 관리 및 보안, 로깅 |
 
 
 ## 기본 규칙
@@ -112,27 +112,16 @@ backend 작업은 아래 순서로 진행한다. 각 단계의 상세 규칙은 
 | 백엔드 개발 서버 | `cd backend && ./gradlew :apps:app:bootRun` |
 | 프론트엔드 개발 서버 | `cd frontend/noroo-mes-app && npm run dev` |
 
-## 코드 작성 규칙
-
-> 상세 규칙은 각 개발 단계별 파일을 참조하세요.
-
-| 영역 | 참조 파일 | 내용 |
-|------|----------|------|
-| 백엔드 패키지 + 아키텍처 | `backend/rules/Plan.md` | 패키지 네이밍, 계층형 구조, 공통 모듈, DB 네이밍 |
-| 백엔드 에러 처리 | `backend/rules/Implementation.md` | BusinessException, Global Handler, ApiResponse |
-| 프론트엔드 컴포넌트 설계 | `frontend/rules/Plan.md` | 컴포넌트 네이밍, 공통 컴포넌트 가이드 |
-| 프론트엔드 코드 작성 | `frontend/rules/Implementation.md` | Vue 3 Composition API, Composables, 에러 처리, 스킬 |
-
 ## 프론트엔드 공통 컴포넌트 가이드
 
 프론트엔드 개발 시 아래 가이드 파일과 `frontend/rules/Plan.md`를 반드시 참조하여 구현합니다.
 
 | 가이드 파일 | 대상 컴포넌트 | 주요 내용 |
 |---|---|---|
-| [`frontend/common/common-button-guide.md`](frontend/common/common-button-guide.md) | `BaseButton.vue` | 9가지 btnType, Props, SVG 아이콘 |
-| [`frontend/common/common-grid-guide.md`](frontend/common/common-grid-guide.md) | `BaseGrid.vue` | 3가지 모드 (페이지네이션/내부스크롤/무한스크롤), 컬럼 리사이즈 |
-| [`frontend/common/common-components-guide.md`](frontend/common/common-components-guide.md) | Form 컴포넌트 | TextBox, ToggleGroup, ComboBox, SelectBox |
-| [`frontend/common/common-popup-guide.md`](frontend/common/common-popup-guide.md) | `BaseModal.vue` | 4가지 모드, 5가지 크기, alert 타입 |
+| [`.claude/frontend/common/common-button-guide.md`](.claude/frontend/common/common-button-guide.md) | `BaseButton.vue` | 9가지 btnType, Props, SVG 아이콘 |
+| [`.claude/frontend/common/common-grid-guide.md`](.claude/frontend/common/common-grid-guide.md) | `BaseGrid.vue` | 3가지 모드 (페이지네이션/내부스크롤/무한스크롤), 컬럼 리사이즈 |
+| [`.claude/frontend/common/common-components-guide.md`](.claude/frontend/common/common-components-guide.md) | Form 컴포넌트 | TextBox, ToggleGroup, ComboBox, SelectBox |
+| [`.claude/frontend/common/common-popup-guide.md`](.claude/frontend/common/common-popup-guide.md) | `BaseModal.vue` | 4가지 모드, 5가지 크기, alert 타입 |
 
 ## 포트 구성
 
@@ -213,7 +202,7 @@ frontend/noroo-mes-app/
 
 ## 인증 및 세션 규칙
 
-> 상세 구현 규칙은 `frontend/rules/Implementation.md` 참조
+> 상세 구현 규칙은 `.claude/frontend/rules/Implementation.md` 참조
 
 - 전역 인증: `middleware/auth.global.ts`에서 모든 페이지 접근 시 인증 여부 검사
 - 세션 타임아웃: `plugins/sessionTimeout.client.ts` + `composables/useSessionTimeout.ts` 조합으로 관리
@@ -221,7 +210,7 @@ frontend/noroo-mes-app/
 
 ## CORS 설정 위치
 
-> 상세 규칙은 `backend/rules/Implementation.md` 참조
+> 상세 규칙은 `.claude/backend/rules/Implementation.md` 참조
 
 - 백엔드 CORS 설정 파일: `backend/src/main/java/com/dit/config/CorsConfig.java`
 - 허용 경로: `/api/**`, 허용 오리진: `http://localhost:3000`
